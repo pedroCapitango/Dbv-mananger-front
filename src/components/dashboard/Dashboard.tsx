@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useDashboardData } from '../../hooks/useDashboardData';
 import { useIsMobile } from '../../hooks/useMediaQuery';
@@ -14,9 +15,10 @@ import { Alert } from '../ui/Alert';
 
 export const Dashboard: React.FC = () => {
   const { logout } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
   const isMobile = useIsMobile();
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
-  const [currentView, setCurrentView] = useState('dashboard');
 
   const {
     stats,
@@ -28,20 +30,32 @@ export const Dashboard: React.FC = () => {
     error,
   } = useDashboardData();
 
+  const getCurrentView = () => {
+    const path = location.pathname.slice(1);
+    return path || 'dashboard';
+  };
+
   const getViewTitle = (view: string): string => {
     const titles: Record<string, string> = {
       dashboard: 'Dashboard',
       members: 'Membros',
+      units: 'Unidades',
       events: 'Eventos',
+      attendance: 'Presenças',
+      progress: 'Progresso',
       finance: 'Finanças',
       inventory: 'Inventário',
-      progress: 'Progresso',
+      feed: 'Feed Social',
     };
     return titles[view] || 'Dashboard';
   };
 
   const handleNavigate = (view: string) => {
-    setCurrentView(view);
+    if (view === 'dashboard') {
+      navigate('/');
+    } else {
+      navigate(`/${view}`);
+    }
     if (isMobile) {
       setSidebarOpen(false);
     }
@@ -69,7 +83,7 @@ export const Dashboard: React.FC = () => {
       >
         <Sidebar
           isOpen={sidebarOpen}
-          currentView={currentView}
+          currentView={getCurrentView()}
           onToggle={() => setSidebarOpen(!sidebarOpen)}
           onNavigate={handleNavigate}
           onLogout={logout}
@@ -78,7 +92,7 @@ export const Dashboard: React.FC = () => {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        <Header title={getViewTitle(currentView)} />
+        <Header title={getViewTitle(getCurrentView())} />
 
         <main className="flex-1 overflow-y-auto p-4 md:p-6">
           {error && (
