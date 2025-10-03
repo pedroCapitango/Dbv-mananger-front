@@ -1,31 +1,36 @@
 import React from 'react';
-import { Menu, X, LogOut, Home, Users, Calendar, DollarSign, Package, Award } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { Menu, X, LogOut, Home, Users, Calendar, DollarSign, Package, Award, Shield } from 'lucide-react';
 import type { MenuItem } from '../../types';
 
 interface SidebarProps {
   isOpen: boolean;
-  currentView: string;
   onToggle: () => void;
-  onNavigate: (view: string) => void;
   onLogout: () => void;
 }
 
 const menuItems: MenuItem[] = [
-  { id: 'dashboard', icon: Home, label: 'Dashboard' },
-  { id: 'members', icon: Users, label: 'Membros' },
-  { id: 'events', icon: Calendar, label: 'Eventos' },
-  { id: 'finance', icon: DollarSign, label: 'Finanças' },
-  { id: 'inventory', icon: Package, label: 'Inventário' },
-  { id: 'progress', icon: Award, label: 'Progresso' },
+  { id: 'dashboard', icon: Home, label: 'Dashboard', path: '/' },
+  { id: 'members', icon: Users, label: 'Membros', path: '/members' },
+  { id: 'units', icon: Shield, label: 'Unidades', path: '/units' },
+  { id: 'events', icon: Calendar, label: 'Eventos', path: '/events' },
+  { id: 'finance', icon: DollarSign, label: 'Finanças', path: '/finance' },
+  { id: 'inventory', icon: Package, label: 'Inventário', path: '/inventory' },
+  { id: 'progress', icon: Award, label: 'Progresso', path: '/progress' },
 ];
 
 export const Sidebar: React.FC<SidebarProps> = ({
   isOpen,
-  currentView,
   onToggle,
-  onNavigate,
   onLogout,
 }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const handleNavigate = (path: string) => {
+    navigate(path);
+  };
+
   return (
     <aside 
       className={`${
@@ -50,11 +55,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {menuItems.map((item) => (
           <button
             key={item.id}
-            onClick={() => onNavigate(item.id)}
+            onClick={() => handleNavigate(item.path || '/')}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition ${
-              currentView === item.id ? 'bg-blue-800' : 'hover:bg-blue-800/50'
+              location.pathname === item.path ? 'bg-blue-800' : 'hover:bg-blue-800/50'
             }`}
-            aria-current={currentView === item.id ? 'page' : undefined}
+            aria-current={location.pathname === item.path ? 'page' : undefined}
             title={!isOpen ? item.label : undefined}
           >
             <item.icon size={20} aria-hidden="true" />

@@ -16,7 +16,6 @@ export const Dashboard: React.FC = () => {
   const { logout } = useAuth();
   const isMobile = useIsMobile();
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
-  const [currentView, setCurrentView] = useState('dashboard');
 
   const {
     stats,
@@ -27,25 +26,6 @@ export const Dashboard: React.FC = () => {
     isLoading,
     error,
   } = useDashboardData();
-
-  const getViewTitle = (view: string): string => {
-    const titles: Record<string, string> = {
-      dashboard: 'Dashboard',
-      members: 'Membros',
-      events: 'Eventos',
-      finance: 'Finanças',
-      inventory: 'Inventário',
-      progress: 'Progresso',
-    };
-    return titles[view] || 'Dashboard';
-  };
-
-  const handleNavigate = (view: string) => {
-    setCurrentView(view);
-    if (isMobile) {
-      setSidebarOpen(false);
-    }
-  };
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
@@ -69,16 +49,14 @@ export const Dashboard: React.FC = () => {
       >
         <Sidebar
           isOpen={sidebarOpen}
-          currentView={currentView}
           onToggle={() => setSidebarOpen(!sidebarOpen)}
-          onNavigate={handleNavigate}
           onLogout={logout}
         />
       </div>
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        <Header title={getViewTitle(currentView)} />
+        <Header title="Dashboard" />
 
         <main className="flex-1 overflow-y-auto p-4 md:p-6">
           {error && (
@@ -87,7 +65,7 @@ export const Dashboard: React.FC = () => {
 
           {isLoading ? (
             <LoadingSpinner size="large" className="mt-20" />
-          ) : currentView === 'dashboard' ? (
+          ) : (
             <>
               {/* Stats Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-6">
@@ -108,17 +86,6 @@ export const Dashboard: React.FC = () => {
                 <TaskList tasks={pendingTasks} />
               </div>
             </>
-          ) : (
-            <div className="flex items-center justify-center h-full">
-              <div className="text-center">
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                  {getViewTitle(currentView)}
-                </h2>
-                <p className="text-gray-600">
-                  Esta seção está em desenvolvimento
-                </p>
-              </div>
-            </div>
           )}
         </main>
       </div>
