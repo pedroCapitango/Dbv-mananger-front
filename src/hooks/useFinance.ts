@@ -112,5 +112,8 @@ export const useFinance = () => {
     updateTransaction,
     deleteTransaction,
     getMonthlyReport,
+    getMembershipFees,
+    generateMembershipFees,
+    payMembershipFee,
   };
 };

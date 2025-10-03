@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Search, Calendar, MapPin, Users } from 'lucide-react';
 import { useEvents } from '../../hooks/useEvents';
+import { useMembers } from '../../hooks/useMembers';
+import { apiService } from '../../services/api';
 import { Table } from '../../components/ui/Table';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
@@ -46,13 +48,15 @@ const eventFormFields: FormField[] = [
 ];
 
 export const EventsPage: React.FC = () => {
-  const { events, isLoading, error, createEvent, updateEvent, deleteEvent } = useEvents();
+  const { events, isLoading, error, createEvent, updateEvent, deleteEvent, addParticipant, removeParticipant } = useEvents();
+  const { members } = useMembers();
   const [searchTerm, setSearchTerm] = useState('');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isParticipantsModalOpen, setIsParticipantsModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<EventResponseDto | null>(null);
+  const [eventParticipants, setEventParticipants] = useState<any[]>([]);
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
 
@@ -182,9 +186,53 @@ export const EventsPage: React.FC = () => {
     setIsViewModalOpen(true);
   };
 
-  const handleManageParticipants = (event: EventResponseDto) => {
+  const handleManageParticipants = async (event: EventResponseDto) => {
     setSelectedEvent(event);
     setIsParticipantsModalOpen(true);
+    
+    // Load participants
+    try {
+      const participants = await apiService.getEventParticipants(event.id);
+      setEventParticipants(participants);
+    } catch (err: any) {
+      setActionError(err.message);
+    }
+  };
+
+  const handleAddParticipant = async (memberId: string) => {
+    if (!selectedEvent) return;
+    
+    try {
+      setActionError(null);
+      await addParticipant(selectedEvent.id, memberId);
+      setActionSuccess('Participante adicionado com sucesso!');
+      
+      // Reload participants
+      const participants = await apiService.getEventParticipants(selectedEvent.id);
+      setEventParticipants(participants);
+      
+      setTimeout(() => setActionSuccess(null), 2000);
+    } catch (err: any) {
+      setActionError(err.message);
+    }
+  };
+
+  const handleRemoveParticipant = async (memberId: string) => {
+    if (!selectedEvent) return;
+    
+    try {
+      setActionError(null);
+      await removeParticipant(selectedEvent.id, memberId);
+      setActionSuccess('Participante removido com sucesso!');
+      
+      // Reload participants
+      const participants = await apiService.getEventParticipants(selectedEvent.id);
+      setEventParticipants(participants);
+      
+      setTimeout(() => setActionSuccess(null), 2000);
+    } catch (err: any) {
+      setActionError(err.message);
+    }
   };
 
   return (
@@ -371,6 +419,7 @@ export const EventsPage: React.FC = () => {
         onClose={() => {
           setIsParticipantsModalOpen(false);
           setSelectedEvent(null);
+          setEventParticipants([]);
         }}
         title={`Participantes - ${selectedEvent?.title || ''}`}
       >
@@ -382,34 +431,73 @@ export const EventsPage: React.FC = () => {
                 <div>
                   <p className="text-sm font-medium text-gray-700">Total de Participantes</p>
                   <p className="text-2xl font-bold text-blue-600">
-                    {selectedEvent._count?.participants || 0}
+                    {eventParticipants.length}
                     {selectedEvent.maxParticipants && (
                       <span className="text-lg text-gray-500"> / {selectedEvent.maxParticipants}</span>
                     )}
                   </p>
                 </div>
               </div>
-              <Button
-                variant="primary"
-                size="small"
-                onClick={() => {
-                  // TODO: Implementar adição de participante
-                  setActionSuccess('Funcionalidade em desenvolvimento');
-                  setTimeout(() => setActionSuccess(null), 2000);
-                }}
-              >
-                <Plus size={16} className="mr-1" />
-                Adicionar
-              </Button>
             </div>
 
-            <div className="border rounded-lg p-4">
-              <p className="text-sm text-gray-500 text-center">
-                Lista de participantes será exibida aqui
-              </p>
-              <p className="text-xs text-gray-400 text-center mt-2">
-                Funcionalidade completa em desenvolvimento
-              </p>
+            <div className="border rounded-lg divide-y">
+              <div className="p-3 bg-gray-50">
+                <p className="text-sm font-medium text-gray-700">Adicionar Participante</p>
+              </div>
+              <div className="p-3">
+                <select
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      handleAddParticipant(e.target.value);
+                      e.target.value = '';
+                    }
+                  }}
+                >
+                  <option value="">Selecione um membro...</option>
+                  {members
+                    .filter(m => !eventParticipants.some(p => p.member?.id === m.id || p.memberId === m.id))
+                    .map(member => (
+                      <option key={member.id} value={member.id}>
+                        {member.firstName} {member.lastName}
+                      </option>
+                    ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="border rounded-lg divide-y max-h-64 overflow-y-auto">
+              <div className="p-3 bg-gray-50">
+                <p className="text-sm font-medium text-gray-700">Participantes Inscritos</p>
+              </div>
+              {eventParticipants.length === 0 ? (
+                <div className="p-4 text-center text-gray-500 text-sm">
+                  Nenhum participante inscrito ainda
+                </div>
+              ) : (
+                eventParticipants.map((participant) => {
+                  const member = participant.member || members.find(m => m.id === participant.memberId);
+                  return (
+                    <div key={participant.id || participant.memberId} className="p-3 flex justify-between items-center">
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">
+                          {member?.firstName} {member?.lastName}
+                        </p>
+                        {participant.status && (
+                          <p className="text-xs text-gray-500">{participant.status}</p>
+                        )}
+                      </div>
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        onClick={() => handleRemoveParticipant(member?.id || participant.memberId)}
+                      >
+                        Remover
+                      </Button>
+                    </div>
+                  );
+                })
+              )}
             </div>
           </div>
         )}
