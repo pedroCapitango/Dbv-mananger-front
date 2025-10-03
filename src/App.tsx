@@ -7,6 +7,10 @@ import { MembersPage } from './pages/members/MembersPage';
 import { EventsPage } from './pages/events/EventsPage';
 import { FinancePage } from './pages/finance/FinancePage';
 import { InventoryPage } from './pages/inventory/InventoryPage';
+import { UnitsPage } from './pages/units/UnitsPage';
+import { AttendancePage } from './pages/attendance/AttendancePage';
+import { ProgressPage } from './pages/progress/ProgressPage';
+import { FeedPage } from './pages/feed/FeedPage';
 import { LoadingOverlay } from './components/ui/LoadingSpinner';
 import './App.css';
 
@@ -32,6 +36,10 @@ const AppContent: React.FC = () => {
       <Route path="/events" element={<ProtectedRoute><EventsPage /></ProtectedRoute>} />
       <Route path="/finance" element={<ProtectedRoute><FinancePage /></ProtectedRoute>} />
       <Route path="/inventory" element={<ProtectedRoute><InventoryPage /></ProtectedRoute>} />
+      <Route path="/units" element={<ProtectedRoute><UnitsPage /></ProtectedRoute>} />
+      <Route path="/attendance" element={<ProtectedRoute><AttendancePage /></ProtectedRoute>} />
+      <Route path="/progress" element={<ProtectedRoute><ProgressPage /></ProtectedRoute>} />
+      <Route path="/feed" element={<ProtectedRoute><FeedPage /></ProtectedRoute>} />
       
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

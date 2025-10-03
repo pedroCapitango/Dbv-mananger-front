@@ -23,6 +23,7 @@ export interface AuthResponseDto {
 export interface UserResponseDto {
   id: number;
   name: string;
+  fullName: string;
   email: string;
   role: string;
   createdAt?: string;
@@ -43,6 +44,7 @@ export interface MemberResponseDto {
   id: string;
   firstName: string;
   lastName: string;
+  fullName: string;
   birthdate: string;
   gender: string;
   photoUrl?: string;
@@ -96,6 +98,8 @@ export interface UnitResponseDto {
   id: string;
   name: string;
   description?: string;
+  minAge?: number;
+  maxAge?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -212,6 +216,7 @@ export interface AttendanceResponseDto {
   status: 'present' | 'absent' | 'late' | 'excused';
   notes?: string;
   recordedAt: string;
+  createdAt: string;
   event?: EventResponseDto;
   member?: MemberResponseDto;
 }
@@ -251,6 +256,8 @@ export interface PostResponseDto {
   updatedAt: string;
   author?: UserResponseDto;
   event?: EventResponseDto;
+  comments?: any[];
+  reactions?: any[];
   _count?: {
     comments: number;
     reactions: number;
