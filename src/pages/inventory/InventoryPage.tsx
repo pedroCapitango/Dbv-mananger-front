@@ -15,6 +15,7 @@ export const InventoryPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<InventoryItemResponseDto | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
@@ -125,6 +126,11 @@ export const InventoryPage: React.FC = () => {
     setIsEditModalOpen(true);
   };
 
+  const handleView = (item: InventoryItemResponseDto) => {
+    setSelectedItem(item);
+    setIsViewModalOpen(true);
+  };
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
@@ -161,6 +167,7 @@ export const InventoryPage: React.FC = () => {
           columns={columns}
           onEdit={openEditModal}
           onDelete={handleDelete}
+          onView={handleView}
           isLoading={isLoading}
         />
       </Card>
@@ -197,6 +204,86 @@ export const InventoryPage: React.FC = () => {
               setSelectedItem(null);
             }}
           />
+        )}
+      </Modal>
+
+      <Modal
+        isOpen={isViewModalOpen}
+        onClose={() => {
+          setIsViewModalOpen(false);
+          setSelectedItem(null);
+        }}
+        title="Detalhes do Item"
+      >
+        {selectedItem && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="col-span-2">
+                <p className="text-sm font-medium text-gray-500">Nome do Item</p>
+                <p className="mt-1 text-lg font-semibold text-gray-900">{selectedItem.name}</p>
+              </div>
+
+              <div>
+                <p className="text-sm font-medium text-gray-500">Categoria</p>
+                <p className="mt-1 text-sm text-gray-900">{selectedItem.category?.name || 'Sem categoria'}</p>
+              </div>
+
+              <div>
+                <p className="text-sm font-medium text-gray-500">Quantidade</p>
+                <p className="mt-1 text-sm text-gray-900 flex items-center gap-2">
+                  <Package size={16} className="text-gray-400" />
+                  {selectedItem.quantity} unidade(s)
+                  {selectedItem.quantity < (selectedItem.minQuantity || 0) && (
+                    <AlertCircle size={16} className="text-yellow-500" />
+                  )}
+                </p>
+              </div>
+
+              {selectedItem.minQuantity && (
+                <div>
+                  <p className="text-sm font-medium text-gray-500">Quantidade Mínima</p>
+                  <p className="mt-1 text-sm text-gray-900">
+                    {selectedItem.minQuantity} unidade(s)
+                  </p>
+                </div>
+              )}
+
+              {selectedItem.location && (
+                <div>
+                  <p className="text-sm font-medium text-gray-500">Localização</p>
+                  <p className="mt-1 text-sm text-gray-900">{selectedItem.location}</p>
+                </div>
+              )}
+            </div>
+
+            {selectedItem.description && (
+              <div>
+                <p className="text-sm font-medium text-gray-500">Descrição</p>
+                <p className="mt-1 text-sm text-gray-900">{selectedItem.description}</p>
+              </div>
+            )}
+
+            <div className="flex gap-2 pt-4 border-t">
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setIsViewModalOpen(false);
+                  openEditModal(selectedItem);
+                }}
+              >
+                Editar
+              </Button>
+              <Button
+                variant="danger"
+                onClick={() => {
+                  setIsViewModalOpen(false);
+                  handleDelete(selectedItem);
+                }}
+              >
+                Deletar
+              </Button>
+            </div>
+          </div>
         )}
       </Modal>
     </div>
