@@ -96,6 +96,34 @@ export const useFinance = () => {
     }
   };
 
+  const getMembershipFees = async () => {
+    try {
+      return await apiService.getMembershipFees();
+    } catch (err: any) {
+      throw err;
+    }
+  };
+
+  const generateMembershipFees = async (data: any) => {
+    try {
+      const result = await apiService.generateMembershipFees(data);
+      await fetchFinanceData(); // Refresh data
+      return result;
+    } catch (err: any) {
+      throw err;
+    }
+  };
+
+  const payMembershipFee = async (id: string, data: any) => {
+    try {
+      const result = await apiService.payMembershipFee(id, data);
+      await fetchFinanceData(); // Refresh data
+      return result;
+    } catch (err: any) {
+      throw err;
+    }
+  };
+
   useEffect(() => {
     fetchFinanceData();
   }, []);
@@ -112,5 +140,8 @@ export const useFinance = () => {
     updateTransaction,
     deleteTransaction,
     getMonthlyReport,
+    getMembershipFees,
+    generateMembershipFees,
+    payMembershipFee,
   };
 };
