@@ -17,7 +17,7 @@ const unitFormFields: FormField[] = [
 ];
 
 export const UnitsPage: React.FC = () => {
-  const { units, isLoading, error, refetch, createUnit, updateUnit, deleteUnit } = useUnits();
+  const { units, isLoading, error, createUnit, updateUnit, deleteUnit } = useUnits();
   
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -100,26 +100,26 @@ export const UnitsPage: React.FC = () => {
         <div className="flex gap-2">
           <Button
             variant="ghost"
-            size="sm"
+            size="small"
             onClick={() => openViewModal(unit)}
-            icon={<Eye className="w-4 h-4" />}
           >
+            <Eye className="w-4 h-4" />
             Ver
           </Button>
           <Button
             variant="ghost"
-            size="sm"
+            size="small"
             onClick={() => openEditModal(unit)}
-            icon={<Edit className="w-4 h-4" />}
           >
+            <Edit className="w-4 h-4" />
             Editar
           </Button>
           <Button
             variant="ghost"
-            size="sm"
+            size="small"
             onClick={() => handleDelete(unit)}
-            icon={<Trash2 className="w-4 h-4" />}
           >
+            <Trash2 className="w-4 h-4" />
             Excluir
           </Button>
         </div>
@@ -147,8 +147,8 @@ export const UnitsPage: React.FC = () => {
         </div>
         <Button
           onClick={() => setIsCreateModalOpen(true)}
-          icon={<Plus className="w-5 h-5" />}
         >
+          <Plus className="w-5 h-5" />
           Nova Unidade
         </Button>
       </div>
@@ -160,8 +160,6 @@ export const UnitsPage: React.FC = () => {
         data={units}
         columns={columns}
         isLoading={isLoading}
-        searchable
-        searchPlaceholder="Buscar unidades..."
       />
 
       <Modal
@@ -187,7 +185,7 @@ export const UnitsPage: React.FC = () => {
         {selectedUnit && (
           <Form
             fields={unitFormFields}
-            initialData={{
+            initialValues={{
               name: selectedUnit.name,
               description: selectedUnit.description || '',
               minAge: selectedUnit.minAge || '',
@@ -241,8 +239,8 @@ export const UnitsPage: React.FC = () => {
                   setIsViewModalOpen(false);
                   openEditModal(selectedUnit);
                 }}
-                icon={<Edit className="w-4 h-4" />}
               >
+                <Edit className="w-4 h-4" />
                 Editar
               </Button>
               <Button
@@ -251,8 +249,8 @@ export const UnitsPage: React.FC = () => {
                   setIsViewModalOpen(false);
                   handleDelete(selectedUnit);
                 }}
-                icon={<Trash2 className="w-4 h-4" />}
               >
+                <Trash2 className="w-4 h-4" />
                 Excluir
               </Button>
             </div>

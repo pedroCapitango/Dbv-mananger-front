@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Plus, CheckCircle, XCircle, Clock, FileText, BarChart3 } from 'lucide-react';
 import { useAttendance } from '../../hooks/useAttendance';
 import { useEvents } from '../../hooks/useEvents';
@@ -14,13 +14,12 @@ import type { AttendanceResponseDto, RecordAttendanceDto } from '../../types';
 import { formatDate } from '../../utils/formatters';
 
 export const AttendancePage: React.FC = () => {
-  const { attendances, statistics, isLoading, error, refetch, recordAttendance, recordBulkAttendance } = useAttendance();
+  const { attendances, statistics, isLoading, error, recordAttendance, recordBulkAttendance } = useAttendance();
   const { events } = useEvents();
   const { members } = useMembers();
   
   const [isRecordModalOpen, setIsRecordModalOpen] = useState(false);
   const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
-  const [selectedEventId, setSelectedEventId] = useState<string>('');
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
@@ -37,7 +36,7 @@ export const AttendancePage: React.FC = () => {
       label: 'Membro',
       type: 'select',
       required: true,
-      options: members.map(m => ({ value: m.id, label: m.fullName })),
+      options: members.map(m => ({ value: m.id, label: `${m.firstName} ${m.lastName}` })),
     },
     {
       name: 'status',
@@ -140,7 +139,7 @@ export const AttendancePage: React.FC = () => {
       label: 'Membro',
       render: (attendance: AttendanceResponseDto) => {
         const member = members.find(m => m.id === attendance.memberId);
-        return member?.fullName || attendance.memberId;
+        return member ? `${member.firstName} ${member.lastName}` : attendance.memberId;
       },
       sortable: true,
     },
@@ -162,7 +161,7 @@ export const AttendancePage: React.FC = () => {
     {
       key: 'date',
       label: 'Data',
-      render: (attendance: AttendanceResponseDto) => formatDate(attendance.createdAt),
+      render: (attendance: AttendanceResponseDto) => formatDate(attendance.recordedAt),
       sortable: true,
     },
   ];
@@ -189,14 +188,14 @@ export const AttendancePage: React.FC = () => {
           <Button
             variant="secondary"
             onClick={() => setIsBulkModalOpen(true)}
-            icon={<BarChart3 className="w-5 h-5" />}
           >
+            <BarChart3 className="w-5 h-5" />
             Registro em Massa
           </Button>
           <Button
             onClick={() => setIsRecordModalOpen(true)}
-            icon={<Plus className="w-5 h-5" />}
           >
+            <Plus className="w-5 h-5" />
             Registrar Presença
           </Button>
         </div>
@@ -261,8 +260,6 @@ export const AttendancePage: React.FC = () => {
         data={attendances}
         columns={columns}
         isLoading={isLoading}
-        searchable
-        searchPlaceholder="Buscar presenças..."
       />
 
       <Modal

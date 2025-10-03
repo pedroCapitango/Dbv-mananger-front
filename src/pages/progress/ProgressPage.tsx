@@ -13,7 +13,7 @@ import type { MemberProgressResponseDto } from '../../types';
 import { formatDate } from '../../utils/formatters';
 
 export const ProgressPage: React.FC = () => {
-  const { progress, isLoading, error, refetch, createProgress, createMemberSpecialty } = useProgress();
+  const { progress, isLoading, error, createProgress, createMemberSpecialty } = useProgress();
   const { members } = useMembers();
   
   const [isProgressModalOpen, setIsProgressModalOpen] = useState(false);
@@ -29,7 +29,7 @@ export const ProgressPage: React.FC = () => {
       label: 'Membro',
       type: 'select',
       required: true,
-      options: members.map(m => ({ value: m.id, label: m.fullName })),
+      options: members.map(m => ({ value: m.id, label: `${m.firstName} ${m.lastName}` })),
     },
     {
       name: 'className',
@@ -65,7 +65,7 @@ export const ProgressPage: React.FC = () => {
       label: 'Membro',
       type: 'select',
       required: true,
-      options: members.map(m => ({ value: m.id, label: m.fullName })),
+      options: members.map(m => ({ value: m.id, label: `${m.firstName} ${m.lastName}` })),
     },
     { name: 'specialtyName', label: 'Nome da Especialidade', type: 'text', required: true, placeholder: 'Ex: Primeiros Socorros' },
     {
@@ -120,7 +120,7 @@ export const ProgressPage: React.FC = () => {
       label: 'Membro',
       render: (item: MemberProgressResponseDto) => {
         const member = members.find(m => m.id === item.memberId);
-        return member?.fullName || item.memberId;
+        return member ? `${member.firstName} ${member.lastName}` : item.memberId;
       },
       sortable: true,
     },
@@ -167,10 +167,10 @@ export const ProgressPage: React.FC = () => {
       render: (item: MemberProgressResponseDto) => (
         <Button
           variant="ghost"
-          size="sm"
+          size="small"
           onClick={() => openViewModal(item)}
-          icon={<Eye className="w-4 h-4" />}
         >
+          <Eye className="w-4 h-4" />
           Ver
         </Button>
       ),
@@ -202,14 +202,14 @@ export const ProgressPage: React.FC = () => {
           <Button
             variant="secondary"
             onClick={() => setIsSpecialtyModalOpen(true)}
-            icon={<Award className="w-5 h-5" />}
           >
+            <Award className="w-5 h-5" />
             Nova Especialidade
           </Button>
           <Button
             onClick={() => setIsProgressModalOpen(true)}
-            icon={<Plus className="w-5 h-5" />}
           >
+            <Plus className="w-5 h-5" />
             Registrar Progresso
           </Button>
         </div>
@@ -254,8 +254,6 @@ export const ProgressPage: React.FC = () => {
         data={progress}
         columns={columns}
         isLoading={isLoading}
-        searchable
-        searchPlaceholder="Buscar progresso..."
       />
 
       <Modal
@@ -295,7 +293,10 @@ export const ProgressPage: React.FC = () => {
             <div>
               <p className="text-sm font-medium text-gray-500">Membro</p>
               <p className="mt-1 text-lg font-semibold text-gray-900">
-                {members.find(m => m.id === selectedProgress.memberId)?.fullName || selectedProgress.memberId}
+                {(() => {
+                  const member = members.find(m => m.id === selectedProgress.memberId);
+                  return member ? `${member.firstName} ${member.lastName}` : selectedProgress.memberId;
+                })()}
               </p>
             </div>
 

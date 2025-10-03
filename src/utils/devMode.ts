@@ -25,6 +25,7 @@ export const enableDevMode = () => {
       user: {
         id: 1,
         name: email.includes('diretor') ? 'Diretor Teste' : 'Admin Desenvolvedor',
+        fullName: email.includes('diretor') ? 'Diretor Teste' : 'Admin Desenvolvedor',
         email: email,
         role: email.includes('diretor') ? 'Diretor' : 'admin',
       }

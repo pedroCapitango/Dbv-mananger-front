@@ -12,7 +12,7 @@ import { formatDate } from '../../utils/formatters';
 import { Input } from '../../components/ui/Input';
 
 export const FeedPage: React.FC = () => {
-  const { posts, isLoading, error, refetch, createPost, updatePost, deletePost, addComment, addReaction } = useFeed();
+  const { posts, isLoading, error, createPost, updatePost, deletePost, addComment, addReaction } = useFeed();
   
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -129,8 +129,8 @@ export const FeedPage: React.FC = () => {
         </div>
         <Button
           onClick={() => setIsCreateModalOpen(true)}
-          icon={<Plus className="w-5 h-5" />}
         >
+          <Plus className="w-5 h-5" />
           Novo Post
         </Button>
       </div>
@@ -155,7 +155,7 @@ export const FeedPage: React.FC = () => {
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
                       <p className="font-semibold text-gray-900">
-                        {post.author?.fullName || 'Autor Desconhecido'}
+                        {post.author?.name || 'Autor Desconhecido'}
                       </p>
                       {post.isPublic && (
                         <span className="px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-700">
@@ -168,16 +168,18 @@ export const FeedPage: React.FC = () => {
                   <div className="flex gap-2">
                     <Button
                       variant="ghost"
-                      size="sm"
+                      size="small"
                       onClick={() => openEditModal(post)}
-                      icon={<Edit className="w-4 h-4" />}
-                    />
+                    >
+                      <Edit className="w-4 h-4" />
+                    </Button>
                     <Button
                       variant="ghost"
-                      size="sm"
+                      size="small"
                       onClick={() => handleDelete(post)}
-                      icon={<Trash2 className="w-4 h-4" />}
-                    />
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
                   </div>
                 </div>
 
@@ -203,7 +205,7 @@ export const FeedPage: React.FC = () => {
                   >
                     <ThumbsUp className="w-5 h-5" />
                     <span className="text-sm">
-                      {post.reactions?.filter(r => r.type === 'like').length || 0}
+                      {post.reactions?.filter((r: any) => r.type === 'like').length || 0}
                     </span>
                   </button>
                   
@@ -213,7 +215,7 @@ export const FeedPage: React.FC = () => {
                   >
                     <Heart className="w-5 h-5" />
                     <span className="text-sm">
-                      {post.reactions?.filter(r => r.type === 'heart').length || 0}
+                      {post.reactions?.filter((r: any) => r.type === 'heart').length || 0}
                     </span>
                   </button>
 
@@ -228,7 +230,7 @@ export const FeedPage: React.FC = () => {
                     {post.comments.map((comment: any) => (
                       <div key={comment.id} className="text-sm">
                         <p className="font-semibold text-gray-900">
-                          {comment.author?.fullName || 'Usuário'}
+                          {comment.author?.name || 'Usuário'}
                         </p>
                         <p className="text-gray-700">{comment.content}</p>
                         <p className="text-xs text-gray-500 mt-1">
@@ -252,10 +254,10 @@ export const FeedPage: React.FC = () => {
                     }}
                   />
                   <Button
-                    size="sm"
+                    size="small"
                     onClick={() => handleAddComment(post.id)}
-                    icon={<Send className="w-4 h-4" />}
                   >
+                    <Send className="w-4 h-4" />
                     Enviar
                   </Button>
                 </div>
@@ -288,7 +290,7 @@ export const FeedPage: React.FC = () => {
         {selectedPost && (
           <Form
             fields={postFormFields}
-            initialData={{
+            initialValues={{
               content: selectedPost.content,
               isPublic: selectedPost.isPublic ? 'true' : 'false',
             }}
