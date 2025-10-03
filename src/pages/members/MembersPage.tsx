@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Plus, Search } from 'lucide-react';
 import { useMembers } from '../../hooks/useMembers';
+import { MainLayout } from '../../components/layout/MainLayout';
 import { Table } from '../../components/ui/Table';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
@@ -140,17 +141,18 @@ export const MembersPage: React.FC = () => {
   };
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Membros</h1>
-          <p className="text-gray-600 mt-1">Gerencie os membros do clube</p>
+    <MainLayout title="Membros">
+      <div className="p-6 space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Membros</h1>
+            <p className="text-gray-600 mt-1">Gerencie os membros do clube</p>
+          </div>
+          <Button onClick={() => setIsCreateModalOpen(true)}>
+            <Plus size={20} className="mr-2" />
+            Novo Membro
+          </Button>
         </div>
-        <Button onClick={() => setIsCreateModalOpen(true)}>
-          <Plus size={20} className="mr-2" />
-          Novo Membro
-        </Button>
-      </div>
 
       {actionSuccess && <Alert type="success">{actionSuccess}</Alert>}
       {actionError && <Alert type="error">{actionError}</Alert>}
@@ -304,6 +306,7 @@ export const MembersPage: React.FC = () => {
           </div>
         )}
       </Modal>
-    </div>
+      </div>
+    </MainLayout>
   );
 };

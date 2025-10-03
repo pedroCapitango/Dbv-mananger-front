@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Plus, DollarSign, CreditCard, PieChart as PieChartIcon, Calendar, Filter, Wallet } from 'lucide-react';
 import { useFinance } from '../../hooks/useFinance';
+import { MainLayout } from '../../components/layout/MainLayout';
 import { Button } from '../../components/ui/Button';
 import { Alert } from '../../components/ui/Alert';
 import {
@@ -20,20 +21,24 @@ export const FinancePage: React.FC = () => {
   
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Carregando dados financeiros...</p>
+      <MainLayout>
+        <div className="flex justify-center items-center min-h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Carregando dados financeiros...</p>
+          </div>
         </div>
-      </div>
+      </MainLayout>
     );
   }
 
   if (error) {
     return (
-      <div className="p-6">
-        <Alert type="error">{error}</Alert>
-      </div>
+      <MainLayout>
+        <div className="p-6">
+          <Alert type="error">{error}</Alert>
+        </div>
+      </MainLayout>
     );
   }
 
@@ -47,7 +52,8 @@ export const FinancePage: React.FC = () => {
   ];
 
   return (
-    <div className="p-6 space-y-6">
+    <MainLayout title="Gestão Financeira">
+      <div className="p-6 space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Gestão Financeira</h1>
@@ -89,6 +95,7 @@ export const FinancePage: React.FC = () => {
         {activeTab === 'fees' && <FinanceMembershipFees />}
         {activeTab === 'reports' && <FinanceReports />}
       </div>
-    </div>
+      </div>
+    </MainLayout>
   );
 };

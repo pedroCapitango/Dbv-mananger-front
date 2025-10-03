@@ -1,18 +1,29 @@
 import React from 'react';
-import { Bell, UserCircle, Search } from 'lucide-react';
+import { Bell, UserCircle, Search, Menu } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
 interface HeaderProps {
   title: string;
+  onMenuClick?: () => void;
+  showMenuButton?: boolean;
 }
 
-export const Header: React.FC<HeaderProps> = ({ title }) => {
+export const Header: React.FC<HeaderProps> = ({ title, onMenuClick, showMenuButton }) => {
   const { user } = useAuth();
 
   return (
     <header className="bg-white border-b border-gray-200 px-6 py-4">
       <div className="flex items-center justify-between">
-        <div className="flex-1">
+        <div className="flex items-center gap-4 flex-1">
+          {showMenuButton && onMenuClick && (
+            <button
+              onClick={onMenuClick}
+              className="p-2 hover:bg-gray-100 rounded-lg transition"
+              aria-label="Abrir menu"
+            >
+              <Menu size={24} className="text-gray-600" />
+            </button>
+          )}
           <h1 className="text-2xl font-bold text-gray-900">{title}</h1>
         </div>
 

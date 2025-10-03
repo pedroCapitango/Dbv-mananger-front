@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Plus, Search, Package, AlertCircle } from 'lucide-react';
 import { useInventory } from '../../hooks/useInventory';
+import { MainLayout } from '../../components/layout/MainLayout';
 import { Table } from '../../components/ui/Table';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
@@ -132,17 +133,18 @@ export const InventoryPage: React.FC = () => {
   };
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Inventário</h1>
-          <p className="text-gray-600 mt-1">Gerencie os itens do inventário</p>
+    <MainLayout title="Inventário">
+      <div className="p-6 space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Inventário</h1>
+            <p className="text-gray-600 mt-1">Gerencie os itens do inventário</p>
+          </div>
+          <Button onClick={() => setIsCreateModalOpen(true)}>
+            <Plus size={20} className="mr-2" />
+            Novo Item
+          </Button>
         </div>
-        <Button onClick={() => setIsCreateModalOpen(true)}>
-          <Plus size={20} className="mr-2" />
-          Novo Item
-        </Button>
-      </div>
 
       {actionSuccess && <Alert type="success">{actionSuccess}</Alert>}
       {actionError && <Alert type="error">{actionError}</Alert>}
@@ -286,6 +288,7 @@ export const InventoryPage: React.FC = () => {
           </div>
         )}
       </Modal>
-    </div>
+      </div>
+    </MainLayout>
   );
 };

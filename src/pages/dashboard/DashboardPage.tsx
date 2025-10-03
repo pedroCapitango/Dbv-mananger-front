@@ -2,6 +2,7 @@ import React from 'react';
 import { Users, Calendar, DollarSign, Package, TrendingUp, TrendingDown, Activity } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { Card } from '../../components/ui/Card';
+import { MainLayout } from '../../components/layout/MainLayout';
 import { useFinance } from '../../hooks/useFinance';
 import { useMembers } from '../../hooks/useMembers';
 import { useEvents } from '../../hooks/useEvents';
@@ -104,22 +105,25 @@ export const DashboardPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Carregando dashboard...</p>
+      <MainLayout>
+        <div className="flex justify-center items-center min-h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Carregando dashboard...</p>
+          </div>
         </div>
-      </div>
+      </MainLayout>
     );
   }
 
   return (
-    <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard</h1>
-        <p className="text-gray-600">Visão geral do sistema de gestão</p>
-      </div>
+    <MainLayout title="Dashboard">
+      <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard</h1>
+          <p className="text-gray-600">Visão geral do sistema de gestão</p>
+        </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -295,6 +299,7 @@ export const DashboardPage: React.FC = () => {
           <p className="text-sm opacity-75">Balanço mensal</p>
         </Card>
       </div>
-    </div>
+      </div>
+    </MainLayout>
   );
 };
