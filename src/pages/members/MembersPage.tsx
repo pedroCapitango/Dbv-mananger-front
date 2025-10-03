@@ -45,10 +45,11 @@ const memberFormFields: FormField[] = [
 ];
 
 export const MembersPage: React.FC = () => {
-  const { members, isLoading, error, createMember, updateMember, deleteMember } = useMembers();
+  const { members, isLoading, error, createMember, updateMember, deleteMember, restoreMember } = useMembers();
   const [searchTerm, setSearchTerm] = useState('');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState<MemberResponseDto | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
@@ -87,30 +88,49 @@ export const MembersPage: React.FC = () => {
     }
   };
 
-  const handleEdit = async (data: Record<string, any>) => {
+  const handleUpdate = async (data: Record<string, any>) => {
     if (!selectedMember) return;
     try {
       setActionError(null);
-      await updateMember(selectedMember.id, data as CreateMemberDto);
-      setActionSuccess('Membro atualizado com sucesso!');
+      await updateMember(selectedMember.id, data as any);
       setIsEditModalOpen(false);
       setSelectedMember(null);
+      setActionSuccess('Membro atualizado com sucesso!');
       setTimeout(() => setActionSuccess(null), 3000);
     } catch (err: any) {
       setActionError(err.message);
     }
   };
 
+  const handleEdit = (member: MemberResponseDto) => {
+    setSelectedMember(member);
+    setIsEditModalOpen(true);
+  };
+
+  const handleView = (member: MemberResponseDto) => {
+    setSelectedMember(member);
+    setIsViewModalOpen(true);
+  };
+
   const handleDelete = async (member: MemberResponseDto) => {
-    if (!window.confirm(`Deseja realmente deletar ${member.firstName} ${member.lastName}?`)) return;
-    
     try {
-      setActionError(null);
       await deleteMember(member.id);
       setActionSuccess('Membro deletado com sucesso!');
       setTimeout(() => setActionSuccess(null), 3000);
-    } catch (err: any) {
-      setActionError(err.message);
+    } catch (err) {
+      setActionError('Erro ao deletar membro');
+      setTimeout(() => setActionError(null), 3000);
+    }
+  };
+
+  const handleRestore = async (member: MemberResponseDto) => {
+    try {
+      await restoreMember(member.id);
+      setActionSuccess('Membro restaurado com sucesso!');
+      setTimeout(() => setActionSuccess(null), 3000);
+    } catch (err) {
+      setActionError('Erro ao restaurar membro');
+      setTimeout(() => setActionError(null), 3000);
     }
   };
 
@@ -155,6 +175,7 @@ export const MembersPage: React.FC = () => {
           columns={columns}
           onEdit={openEditModal}
           onDelete={handleDelete}
+          onView={handleView}
           isLoading={isLoading}
         />
       </Card>
@@ -183,7 +204,7 @@ export const MembersPage: React.FC = () => {
         {selectedMember && (
           <Form
             fields={memberFormFields}
-            onSubmit={handleEdit}
+            onSubmit={handleUpdate}
             submitLabel="Salvar Alterações"
             initialValues={selectedMember}
             onCancel={() => {
@@ -191,6 +212,96 @@ export const MembersPage: React.FC = () => {
               setSelectedMember(null);
             }}
           />
+        )}
+      </Modal>
+
+      <Modal
+        isOpen={isViewModalOpen}
+        onClose={() => {
+          setIsViewModalOpen(false);
+          setSelectedMember(null);
+        }}
+        title="Visualizar Membro"
+      >
+        {selectedMember && (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm font-medium text-gray-500">Nome</p>
+                <p className="mt-1 text-sm text-gray-900">{selectedMember.firstName} {selectedMember.lastName}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-500">Data de Nascimento</p>
+                <p className="mt-1 text-sm text-gray-900">{formatDate(selectedMember.birthdate)}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-500">Gênero</p>
+                <p className="mt-1 text-sm text-gray-900">{selectedMember.gender === 'M' ? 'Masculino' : 'Feminino'}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-500">Responsável</p>
+                <p className="mt-1 text-sm text-gray-900">{selectedMember.parentName || '-'}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-500">Tel. Responsável</p>
+                <p className="mt-1 text-sm text-gray-900">{selectedMember.parentPhone || '-'}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-500">Email Responsável</p>
+                <p className="mt-1 text-sm text-gray-900">{selectedMember.parentEmail || '-'}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-500">Contato de Emergência</p>
+                <p className="mt-1 text-sm text-gray-900">{selectedMember.emergencyContact || '-'}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-500">Tel. Emergência</p>
+                <p className="mt-1 text-sm text-gray-900">{selectedMember.emergencyPhone || '-'}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-500">Status</p>
+                <p className="mt-1">
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    selectedMember.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
+                  }`}>
+                    {selectedMember.status === 'active' ? 'Ativo' : 'Inativo'}
+                  </span>
+                </p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-500">Unidade</p>
+                <p className="mt-1 text-sm text-gray-900">{selectedMember.unit?.name || '-'}</p>
+              </div>
+            </div>
+            {selectedMember.address && (
+              <div>
+                <p className="text-sm font-medium text-gray-500">Endereço</p>
+                <p className="mt-1 text-sm text-gray-900">{selectedMember.address}</p>
+              </div>
+            )}
+            <div className="flex gap-2 pt-4 border-t">
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setIsViewModalOpen(false);
+                  handleEdit(selectedMember);
+                }}
+              >
+                Editar
+              </Button>
+              {selectedMember.status !== 'active' && (
+                <Button
+                  variant="primary"
+                  onClick={() => {
+                    handleRestore(selectedMember);
+                    setIsViewModalOpen(false);
+                  }}
+                >
+                  Restaurar
+                </Button>
+              )}
+            </div>
+          </div>
         )}
       </Modal>
     </div>
