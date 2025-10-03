@@ -50,6 +50,8 @@ export const EventsPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [isParticipantsModalOpen, setIsParticipantsModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<EventResponseDto | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
@@ -175,6 +177,16 @@ export const EventsPage: React.FC = () => {
     setIsEditModalOpen(true);
   };
 
+  const handleView = (event: EventResponseDto) => {
+    setSelectedEvent(event);
+    setIsViewModalOpen(true);
+  };
+
+  const handleManageParticipants = (event: EventResponseDto) => {
+    setSelectedEvent(event);
+    setIsParticipantsModalOpen(true);
+  };
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
@@ -211,6 +223,7 @@ export const EventsPage: React.FC = () => {
           columns={columns}
           onEdit={openEditModal}
           onDelete={handleDelete}
+          onView={handleView}
           isLoading={isLoading}
         />
       </Card>
@@ -251,6 +264,154 @@ export const EventsPage: React.FC = () => {
               setSelectedEvent(null);
             }}
           />
+        )}
+      </Modal>
+
+      <Modal
+        isOpen={isViewModalOpen}
+        onClose={() => {
+          setIsViewModalOpen(false);
+          setSelectedEvent(null);
+        }}
+        title="Detalhes do Evento"
+      >
+        {selectedEvent && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="col-span-2">
+                <p className="text-sm font-medium text-gray-500">Título</p>
+                <p className="mt-1 text-lg font-semibold text-gray-900">{selectedEvent.title}</p>
+              </div>
+              
+              <div>
+                <p className="text-sm font-medium text-gray-500">Tipo</p>
+                <p className="mt-1 text-sm text-gray-900">{selectedEvent.type}</p>
+              </div>
+
+              <div>
+                <p className="text-sm font-medium text-gray-500">Status</p>
+                <p className="mt-1">
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(selectedEvent.status)}`}>
+                    {getStatusLabel(selectedEvent.status)}
+                  </span>
+                </p>
+              </div>
+
+              <div>
+                <p className="text-sm font-medium text-gray-500">Data de Início</p>
+                <p className="mt-1 text-sm text-gray-900 flex items-center gap-2">
+                  <Calendar size={16} className="text-gray-400" />
+                  {formatDate(selectedEvent.startDate)}
+                </p>
+              </div>
+
+              {selectedEvent.endDate && (
+                <div>
+                  <p className="text-sm font-medium text-gray-500">Data de Término</p>
+                  <p className="mt-1 text-sm text-gray-900 flex items-center gap-2">
+                    <Calendar size={16} className="text-gray-400" />
+                    {formatDate(selectedEvent.endDate)}
+                  </p>
+                </div>
+              )}
+
+              {selectedEvent.location && (
+                <div>
+                  <p className="text-sm font-medium text-gray-500">Local</p>
+                  <p className="mt-1 text-sm text-gray-900 flex items-center gap-2">
+                    <MapPin size={16} className="text-gray-400" />
+                    {selectedEvent.location}
+                  </p>
+                </div>
+              )}
+
+              <div>
+                <p className="text-sm font-medium text-gray-500">Participantes</p>
+                <p className="mt-1 text-sm text-gray-900 flex items-center gap-2">
+                  <Users size={16} className="text-gray-400" />
+                  {selectedEvent._count?.participants || 0}
+                  {selectedEvent.maxParticipants && ` / ${selectedEvent.maxParticipants}`}
+                </p>
+              </div>
+            </div>
+
+            {selectedEvent.description && (
+              <div>
+                <p className="text-sm font-medium text-gray-500">Descrição</p>
+                <p className="mt-1 text-sm text-gray-900 whitespace-pre-wrap">{selectedEvent.description}</p>
+              </div>
+            )}
+
+            <div className="flex gap-2 pt-4 border-t">
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setIsViewModalOpen(false);
+                  openEditModal(selectedEvent);
+                }}
+              >
+                Editar
+              </Button>
+              <Button
+                variant="primary"
+                onClick={() => {
+                  setIsViewModalOpen(false);
+                  handleManageParticipants(selectedEvent);
+                }}
+              >
+                Gerir Participantes
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      <Modal
+        isOpen={isParticipantsModalOpen}
+        onClose={() => {
+          setIsParticipantsModalOpen(false);
+          setSelectedEvent(null);
+        }}
+        title={`Participantes - ${selectedEvent?.title || ''}`}
+      >
+        {selectedEvent && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
+              <div className="flex items-center gap-3">
+                <Users size={24} className="text-blue-600" />
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Total de Participantes</p>
+                  <p className="text-2xl font-bold text-blue-600">
+                    {selectedEvent._count?.participants || 0}
+                    {selectedEvent.maxParticipants && (
+                      <span className="text-lg text-gray-500"> / {selectedEvent.maxParticipants}</span>
+                    )}
+                  </p>
+                </div>
+              </div>
+              <Button
+                variant="primary"
+                size="small"
+                onClick={() => {
+                  // TODO: Implementar adição de participante
+                  setActionSuccess('Funcionalidade em desenvolvimento');
+                  setTimeout(() => setActionSuccess(null), 2000);
+                }}
+              >
+                <Plus size={16} className="mr-1" />
+                Adicionar
+              </Button>
+            </div>
+
+            <div className="border rounded-lg p-4">
+              <p className="text-sm text-gray-500 text-center">
+                Lista de participantes será exibida aqui
+              </p>
+              <p className="text-xs text-gray-400 text-center mt-2">
+                Funcionalidade completa em desenvolvimento
+              </p>
+            </div>
+          </div>
         )}
       </Modal>
     </div>
