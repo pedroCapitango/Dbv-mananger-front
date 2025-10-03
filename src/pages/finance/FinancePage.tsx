@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Plus, Search, TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
 import { useFinance } from '../../hooks/useFinance';
+import { Layout } from '../../components/layout/Layout';
 import { Table } from '../../components/ui/Table';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
@@ -135,21 +136,24 @@ export const FinancePage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Carregando finanças...</p>
+      <Layout title="Finanças">
+        <div className="flex justify-center items-center min-h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Carregando finanças...</p>
+          </div>
         </div>
-      </div>
+      </Layout>
     );
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Finanças</h1>
-        <p className="text-gray-600">Gerencie todas as transações financeiras do clube</p>
-      </div>
+    <Layout title="Finanças">
+      <div className="p-6 space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Finanças</h1>
+          <p className="text-gray-600">Gerencie todas as transações financeiras do clube</p>
+        </div>
 
       {dashboard && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -343,6 +347,7 @@ export const FinancePage: React.FC = () => {
           </div>
         )}
       </Modal>
-    </div>
+      </div>
+    </Layout>
   );
 };

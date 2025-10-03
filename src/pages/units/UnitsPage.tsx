@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Plus, Search, Users } from 'lucide-react';
 import { useUnits } from '../../hooks/useUnits';
+import { Layout } from '../../components/layout/Layout';
 import { Table } from '../../components/ui/Table';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
@@ -101,27 +102,30 @@ export const UnitsPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Carregando unidades...</p>
+      <Layout title="Unidades">
+        <div className="flex justify-center items-center min-h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Carregando unidades...</p>
+          </div>
         </div>
-      </div>
+      </Layout>
     );
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Unidades</h1>
-          <p className="text-gray-600 mt-1">Gerencie as unidades do clube (Lobinhos, Pioneiros, etc.)</p>
+    <Layout title="Unidades">
+      <div className="p-6 space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Unidades</h1>
+            <p className="text-gray-600 mt-1">Gerencie as unidades do clube (Lobinhos, Pioneiros, etc.)</p>
+          </div>
+          <Button onClick={() => setIsCreateModalOpen(true)}>
+            <Plus size={20} className="mr-2" />
+            Nova Unidade
+          </Button>
         </div>
-        <Button onClick={() => setIsCreateModalOpen(true)}>
-          <Plus size={20} className="mr-2" />
-          Nova Unidade
-        </Button>
-      </div>
 
       {actionSuccess && <Alert type="success">{actionSuccess}</Alert>}
       {actionError && <Alert type="error">{actionError}</Alert>}
@@ -246,6 +250,7 @@ export const UnitsPage: React.FC = () => {
           </div>
         )}
       </Modal>
-    </div>
+      </div>
+    </Layout>
   );
 };

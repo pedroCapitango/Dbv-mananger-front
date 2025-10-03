@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Plus, Search, Calendar, MapPin, Users } from 'lucide-react';
 import { useEvents } from '../../hooks/useEvents';
+import { Layout } from '../../components/layout/Layout';
 import { Table } from '../../components/ui/Table';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
@@ -188,17 +189,18 @@ export const EventsPage: React.FC = () => {
   };
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Eventos</h1>
-          <p className="text-gray-600 mt-1">Gerencie os eventos do clube</p>
+    <Layout title="Eventos">
+      <div className="p-6 space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Eventos</h1>
+            <p className="text-gray-600 mt-1">Gerencie os eventos do clube</p>
+          </div>
+          <Button onClick={() => setIsCreateModalOpen(true)}>
+            <Plus size={20} className="mr-2" />
+            Novo Evento
+          </Button>
         </div>
-        <Button onClick={() => setIsCreateModalOpen(true)}>
-          <Plus size={20} className="mr-2" />
-          Novo Evento
-        </Button>
-      </div>
 
       {actionSuccess && <Alert type="success">{actionSuccess}</Alert>}
       {actionError && <Alert type="error">{actionError}</Alert>}
@@ -414,6 +416,7 @@ export const EventsPage: React.FC = () => {
           </div>
         )}
       </Modal>
-    </div>
+      </div>
+    </Layout>
   );
 };
