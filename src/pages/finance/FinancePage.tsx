@@ -1,348 +1,94 @@
 import React, { useState } from 'react';
-import { Plus, Search, TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
+import { Plus, DollarSign, CreditCard, PieChart as PieChartIcon, Calendar, Filter, Wallet } from 'lucide-react';
 import { useFinance } from '../../hooks/useFinance';
-import { Table } from '../../components/ui/Table';
 import { Button } from '../../components/ui/Button';
-import { Card } from '../../components/ui/Card';
-import { Modal } from '../../components/ui/Modal';
-import { Form } from '../../components/ui/Form';
-import type { FormField } from '../../components/ui/Form';
 import { Alert } from '../../components/ui/Alert';
-import type { TransactionResponseDto, CreateTransactionDto } from '../../types';
-import { formatDate, formatCurrency } from '../../utils/formatters';
+import {
+  FinanceOverview,
+  FinanceTransactions,
+  FinanceCategories,
+  FinanceAccounts,
+  FinanceMembershipFees,
+  FinanceReports
+} from './components';
 
-const transactionFormFields: FormField[] = [
-  { 
-    name: 'type', 
-    label: 'Tipo', 
-    type: 'select', 
-    required: true,
-    options: [
-      { value: 'income', label: 'Receita' },
-      { value: 'expense', label: 'Despesa' }
-    ]
-  },
-  { name: 'amount', label: 'Valor', type: 'number', required: true, placeholder: '1000' },
-  { name: 'description', label: 'Descrição', type: 'textarea', placeholder: 'Descrição da transação...', rows: 3 },
-  { name: 'categoryId', label: 'Categoria', type: 'text', required: true, placeholder: 'ID da categoria' },
-  { name: 'accountId', label: 'Conta', type: 'text', required: true, placeholder: 'ID da conta' },
-  { name: 'date', label: 'Data', type: 'date', required: true },
-  { name: 'paymentMethod', label: 'Método de Pagamento', type: 'text', placeholder: 'Dinheiro, Cartão, etc.' },
-  { name: 'reference', label: 'Referência', type: 'text', placeholder: 'Número do documento' },
-];
+type TabType = 'overview' | 'transactions' | 'categories' | 'accounts' | 'fees' | 'reports';
 
 export const FinancePage: React.FC = () => {
-  const { transactions, dashboard, isLoading, error, createTransaction, updateTransaction, deleteTransaction } = useFinance();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
-  const [selectedTransaction, setSelectedTransaction] = useState<TransactionResponseDto | null>(null);
-  const [actionError, setActionError] = useState<string | null>(null);
-  const [actionSuccess, setActionSuccess] = useState<string | null>(null);
-
-  const filteredTransactions = transactions.filter(t =>
-    t.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    t.type.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const columns = [
-    { 
-      key: 'date', 
-      label: 'Data', 
-      render: (t: TransactionResponseDto) => formatDate(t.date) 
-    },
-    { 
-      key: 'description', 
-      label: 'Descrição',
-      render: (t: TransactionResponseDto) => (
-        <div>
-          <div className="font-medium text-gray-900">{t.description || 'Sem descrição'}</div>
-        </div>
-      )
-    },
-    { 
-      key: 'type', 
-      label: 'Tipo',
-      render: (t: TransactionResponseDto) => {
-        const bgClass = t.type === 'income' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700';
-        return (
-          <span className={`px-2 py-1 rounded-full text-xs font-medium ${bgClass}`}>
-            {t.type === 'income' ? 'Receita' : 'Despesa'}
-          </span>
-        );
-      }
-    },
-    { 
-      key: 'amount', 
-      label: 'Valor',
-      render: (t: TransactionResponseDto) => (
-        <span className={t.type === 'income' ? 'text-green-600 font-semibold' : 'text-red-600 font-semibold'}>
-          {formatCurrency(t.amount)}
-        </span>
-      )
-    },
-  ];
-
-  const handleCreate = async (data: Record<string, any>) => {
-    try {
-      setActionError(null);
-      await createTransaction(data as CreateTransactionDto);
-      setActionSuccess('Transação criada com sucesso!');
-      setIsCreateModalOpen(false);
-      setTimeout(() => setActionSuccess(null), 3000);
-    } catch (err: any) {
-      setActionError(err.message);
-    }
-  };
-
-  const handleEdit = async (data: Record<string, any>) => {
-    if (!selectedTransaction) return;
-    try {
-      setActionError(null);
-      await updateTransaction(selectedTransaction.id, data as CreateTransactionDto);
-      setActionSuccess('Transação atualizada com sucesso!');
-      setIsEditModalOpen(false);
-      setSelectedTransaction(null);
-      setTimeout(() => setActionSuccess(null), 3000);
-    } catch (err: any) {
-      setActionError(err.message);
-    }
-  };
-
-  const handleDelete = async (transaction: TransactionResponseDto) => {
-    if (!window.confirm('Deseja realmente deletar esta transação?')) return;
-    
-    try {
-      setActionError(null);
-      await deleteTransaction(transaction.id);
-      setActionSuccess('Transação deletada com sucesso!');
-      setTimeout(() => setActionSuccess(null), 3000);
-    } catch (err: any) {
-      setActionError(err.message);
-    }
-  };
-
-  const openEditModal = (transaction: TransactionResponseDto) => {
-    setSelectedTransaction(transaction);
-    setIsEditModalOpen(true);
-  };
-
-  const handleView = (transaction: TransactionResponseDto) => {
-    setSelectedTransaction(transaction);
-    setIsViewModalOpen(true);
-  };
-
+  const { dashboard, isLoading, error } = useFinance();
+  const [activeTab, setActiveTab] = useState<TabType>('overview');
+  
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Carregando finanças...</p>
+          <p className="text-gray-600">Carregando dados financeiros...</p>
         </div>
       </div>
     );
   }
 
+  if (error) {
+    return (
+      <div className="p-6">
+        <Alert type="error">{error}</Alert>
+      </div>
+    );
+  }
+
+  const tabs = [
+    { id: 'overview' as TabType, label: 'Visão Geral', icon: PieChartIcon },
+    { id: 'transactions' as TabType, label: 'Transações', icon: DollarSign },
+    { id: 'categories' as TabType, label: 'Categorias', icon: Filter },
+    { id: 'accounts' as TabType, label: 'Contas', icon: Wallet },
+    { id: 'fees' as TabType, label: 'Mensalidades', icon: CreditCard },
+    { id: 'reports' as TabType, label: 'Relatórios', icon: Calendar },
+  ];
+
   return (
     <div className="p-6 space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Finanças</h1>
-        <p className="text-gray-600">Gerencie todas as transações financeiras do clube</p>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Gestão Financeira</h1>
+          <p className="text-gray-600 mt-1">Controle completo das finanças do clube</p>
+        </div>
+        <Button variant="primary" onClick={() => setActiveTab('transactions')}>
+          <Plus size={20} className="mr-2" />
+          Nova Transação
+        </Button>
       </div>
 
-      {dashboard && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Receita Total</p>
-                <p className="text-2xl font-bold text-green-600">{formatCurrency(dashboard.totalIncome || 0)}</p>
-              </div>
-              <div className="p-3 bg-green-100 rounded-full">
-                <TrendingUp className="w-6 h-6 text-green-600" />
-              </div>
-            </div>
-          </Card>
-
-          <Card>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Despesa Total</p>
-                <p className="text-2xl font-bold text-red-600">{formatCurrency(dashboard.totalExpenses || 0)}</p>
-              </div>
-              <div className="p-3 bg-red-100 rounded-full">
-                <TrendingDown className="w-6 h-6 text-red-600" />
-              </div>
-            </div>
-          </Card>
-
-          <Card>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Saldo</p>
-                <p className={`text-2xl font-bold ${(dashboard.balance || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {formatCurrency(dashboard.balance || 0)}
-                </p>
-              </div>
-              <div className="p-3 bg-blue-100 rounded-full">
-                <DollarSign className="w-6 h-6 text-blue-600" />
-              </div>
-            </div>
-          </Card>
-        </div>
-      )}
-
-      {actionSuccess && <Alert type="success">{actionSuccess}</Alert>}
-      {actionError && <Alert type="error">{actionError}</Alert>}
-      {error && <Alert type="error">{error}</Alert>}
-
-      <Card>
-        <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
-          <div className="relative flex-1 w-full">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-            <input
-              type="text"
-              placeholder="Buscar transações..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <Button onClick={() => setIsCreateModalOpen(true)}>
-            <Plus size={20} className="mr-2" />
-            Nova Transação
-          </Button>
-        </div>
-      </Card>
-
-      <Card>
-        <Table
-          data={filteredTransactions}
-          columns={columns}
-          onEdit={openEditModal}
-          onDelete={handleDelete}
-          onView={handleView}
-          isLoading={isLoading}
-        />
-      </Card>
-
-      <Modal
-        isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
-        title="Nova Transação"
-      >
-        <Form
-          fields={transactionFormFields}
-          onSubmit={handleCreate}
-          submitLabel="Criar Transação"
-          onCancel={() => setIsCreateModalOpen(false)}
-        />
-      </Modal>
-
-      <Modal
-        isOpen={isEditModalOpen}
-        onClose={() => {
-          setIsEditModalOpen(false);
-          setSelectedTransaction(null);
-        }}
-        title="Editar Transação"
-      >
-        {selectedTransaction && (
-          <Form
-            fields={transactionFormFields}
-            onSubmit={handleEdit}
-            submitLabel="Salvar Alterações"
-            initialValues={selectedTransaction}
-            onCancel={() => {
-              setIsEditModalOpen(false);
-              setSelectedTransaction(null);
-            }}
-          />
-        )}
-      </Modal>
-
-      <Modal
-        isOpen={isViewModalOpen}
-        onClose={() => {
-          setIsViewModalOpen(false);
-          setSelectedTransaction(null);
-        }}
-        title="Detalhes da Transação"
-      >
-        {selectedTransaction && (
-          <div className="space-y-6">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="col-span-2">
-                <p className="text-sm font-medium text-gray-500">Descrição</p>
-                <p className="mt-1 text-lg font-semibold text-gray-900">
-                  {selectedTransaction.description || 'Sem descrição'}
-                </p>
-              </div>
-
-              <div>
-                <p className="text-sm font-medium text-gray-500">Tipo</p>
-                <p className="mt-1">
-                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    selectedTransaction.type === 'income' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                  }`}>
-                    {selectedTransaction.type === 'income' ? 'Receita' : 'Despesa'}
-                  </span>
-                </p>
-              </div>
-
-              <div>
-                <p className="text-sm font-medium text-gray-500">Valor</p>
-                <p className={`mt-1 text-2xl font-bold ${
-                  selectedTransaction.type === 'income' ? 'text-green-600' : 'text-red-600'
-                }`}>
-                  {formatCurrency(selectedTransaction.amount)}
-                </p>
-              </div>
-
-              <div>
-                <p className="text-sm font-medium text-gray-500">Data</p>
-                <p className="mt-1 text-sm text-gray-900">{formatDate(selectedTransaction.date)}</p>
-              </div>
-
-              <div>
-                <p className="text-sm font-medium text-gray-500">Categoria</p>
-                <p className="mt-1 text-sm text-gray-900">
-                  {selectedTransaction.category?.name || 'Sem categoria'}
-                </p>
-              </div>
-
-              <div>
-                <p className="text-sm font-medium text-gray-500">Conta</p>
-                <p className="mt-1 text-sm text-gray-900">
-                  {selectedTransaction.account?.name || 'Sem conta'}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex gap-2 pt-4 border-t">
-              <Button
-                variant="secondary"
-                onClick={() => {
-                  setIsViewModalOpen(false);
-                  openEditModal(selectedTransaction);
-                }}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="flex overflow-x-auto">
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-2 px-6 py-4 font-medium transition-colors whitespace-nowrap ${
+                  activeTab === tab.id
+                    ? 'bg-blue-50 text-blue-600 border-b-2 border-blue-600'
+                    : 'text-gray-600 hover:bg-gray-50'
+                }`}
               >
-                Editar
-              </Button>
-              <Button
-                variant="danger"
-                onClick={() => {
-                  setIsViewModalOpen(false);
-                  handleDelete(selectedTransaction);
-                }}
-              >
-                Deletar
-              </Button>
-            </div>
-          </div>
-        )}
-      </Modal>
+                <Icon size={20} />
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="mt-6">
+        {activeTab === 'overview' && <FinanceOverview dashboard={dashboard || undefined} />}
+        {activeTab === 'transactions' && <FinanceTransactions />}
+        {activeTab === 'categories' && <FinanceCategories />}
+        {activeTab === 'accounts' && <FinanceAccounts />}
+        {activeTab === 'fees' && <FinanceMembershipFees />}
+        {activeTab === 'reports' && <FinanceReports />}
+      </div>
     </div>
   );
 };
