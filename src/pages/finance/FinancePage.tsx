@@ -36,6 +36,7 @@ export const FinancePage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<TransactionResponseDto | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
@@ -127,6 +128,11 @@ export const FinancePage: React.FC = () => {
     setIsEditModalOpen(true);
   };
 
+  const handleView = (transaction: TransactionResponseDto) => {
+    setSelectedTransaction(transaction);
+    setIsViewModalOpen(true);
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -216,6 +222,7 @@ export const FinancePage: React.FC = () => {
           columns={columns}
           onEdit={openEditModal}
           onDelete={handleDelete}
+          onView={handleView}
           isLoading={isLoading}
         />
       </Card>
@@ -252,6 +259,88 @@ export const FinancePage: React.FC = () => {
               setSelectedTransaction(null);
             }}
           />
+        )}
+      </Modal>
+
+      <Modal
+        isOpen={isViewModalOpen}
+        onClose={() => {
+          setIsViewModalOpen(false);
+          setSelectedTransaction(null);
+        }}
+        title="Detalhes da Transação"
+      >
+        {selectedTransaction && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="col-span-2">
+                <p className="text-sm font-medium text-gray-500">Descrição</p>
+                <p className="mt-1 text-lg font-semibold text-gray-900">
+                  {selectedTransaction.description || 'Sem descrição'}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-sm font-medium text-gray-500">Tipo</p>
+                <p className="mt-1">
+                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                    selectedTransaction.type === 'income' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                  }`}>
+                    {selectedTransaction.type === 'income' ? 'Receita' : 'Despesa'}
+                  </span>
+                </p>
+              </div>
+
+              <div>
+                <p className="text-sm font-medium text-gray-500">Valor</p>
+                <p className={`mt-1 text-2xl font-bold ${
+                  selectedTransaction.type === 'income' ? 'text-green-600' : 'text-red-600'
+                }`}>
+                  {formatCurrency(selectedTransaction.amount)}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-sm font-medium text-gray-500">Data</p>
+                <p className="mt-1 text-sm text-gray-900">{formatDate(selectedTransaction.date)}</p>
+              </div>
+
+              <div>
+                <p className="text-sm font-medium text-gray-500">Categoria</p>
+                <p className="mt-1 text-sm text-gray-900">
+                  {selectedTransaction.category?.name || 'Sem categoria'}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-sm font-medium text-gray-500">Conta</p>
+                <p className="mt-1 text-sm text-gray-900">
+                  {selectedTransaction.account?.name || 'Sem conta'}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-2 pt-4 border-t">
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setIsViewModalOpen(false);
+                  openEditModal(selectedTransaction);
+                }}
+              >
+                Editar
+              </Button>
+              <Button
+                variant="danger"
+                onClick={() => {
+                  setIsViewModalOpen(false);
+                  handleDelete(selectedTransaction);
+                }}
+              >
+                Deletar
+              </Button>
+            </div>
+          </div>
         )}
       </Modal>
     </div>
