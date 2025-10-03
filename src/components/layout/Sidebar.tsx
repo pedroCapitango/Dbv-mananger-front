@@ -1,5 +1,5 @@
 import React from 'react';
-import { Menu, X, LogOut, Home, Users, Calendar, DollarSign, Package, Award } from 'lucide-react';
+import { Menu, X, LogOut, Home, Users, Calendar, DollarSign, Package, Award, UserCheck, Star, MessageSquare, Building2 } from 'lucide-react';
 import type { MenuItem } from '../../types';
 
 interface SidebarProps {
@@ -13,10 +13,13 @@ interface SidebarProps {
 const menuItems: MenuItem[] = [
   { id: 'dashboard', icon: Home, label: 'Dashboard' },
   { id: 'members', icon: Users, label: 'Membros' },
+  { id: 'units', icon: Building2, label: 'Unidades' },
   { id: 'events', icon: Calendar, label: 'Eventos' },
+  { id: 'attendance', icon: UserCheck, label: 'Presenças' },
+  { id: 'progress', icon: Award, label: 'Progresso' },
   { id: 'finance', icon: DollarSign, label: 'Finanças' },
   { id: 'inventory', icon: Package, label: 'Inventário' },
-  { id: 'progress', icon: Award, label: 'Progresso' },
+  { id: 'feed', icon: MessageSquare, label: 'Feed Social' },
 ];
 
 export const Sidebar: React.FC<SidebarProps> = ({
