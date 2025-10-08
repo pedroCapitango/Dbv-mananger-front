@@ -32,10 +32,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setIsLoading(true);
     setError(null);
     try {
+      console.log('🔐 AuthContext: Tentando login com:', { email, password });
       const response = await apiService.login(email, password);
+      console.log('✅ AuthContext: Login bem-sucedido, resposta:', response);
+      
+      // Validar se a resposta tem access_token e user
+      if (!response.access_token) {
+        throw new Error('Token de acesso não recebido do servidor');
+      }
+      
+      if (!response.user) {
+        throw new Error('Dados do usuário não recebidos do servidor');
+      }
+      
       // A API retorna { access_token, token_type, expires_in, user }
       setUser(response.user);
+      console.log('👤 Usuário autenticado:', response.user);
     } catch (err: any) {
+      console.error('❌ AuthContext: Erro no login:', err);
       const errorMessage = err.message || 'Erro ao fazer login';
       setError(errorMessage);
       throw new Error(errorMessage);

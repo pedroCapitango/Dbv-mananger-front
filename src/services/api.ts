@@ -117,11 +117,23 @@ class ApiService {
 
   // ============= Auth Endpoints =============
   async login(email: string, password: string) {
+    console.log('🌐 API Service: Fazendo requisição de login para:', `${this.baseUrl}/auth/login`);
+    console.log('📧 Dados:', { email, password });
+    
     const response = await this.request<AuthResponseDto>('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     });
-    this.setToken(response.access_token);
+    
+    console.log('📦 Resposta recebida:', response);
+    
+    if (response.access_token) {
+      this.setToken(response.access_token);
+      console.log('🔑 Token salvo:', response.access_token.substring(0, 20) + '...');
+    } else {
+      console.warn('⚠️ Resposta não contém access_token!');
+    }
+    
     return response;
   }
 

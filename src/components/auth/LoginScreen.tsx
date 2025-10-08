@@ -32,11 +32,20 @@ export const LoginScreen: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!validateForm()) return;
+    console.log('🔵 LoginScreen: Formulário submetido');
+    console.log('📧 Dados do formulário:', { email, password });
+    
+    if (!validateForm()) {
+      console.log('❌ LoginScreen: Validação falhou');
+      return;
+    }
 
+    console.log('✅ LoginScreen: Validação OK, chamando login...');
     try {
       await login(email, password);
+      console.log('🎉 LoginScreen: Login completado com sucesso!');
     } catch (err) {
+      console.error('💥 LoginScreen: Erro capturado:', err);
       // Error handled by AuthContext
     }
   };
