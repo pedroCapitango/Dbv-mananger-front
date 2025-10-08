@@ -74,14 +74,42 @@ class ApiService {
         return {} as T;
       }
 
-      const data = await response.json();
+      // Verificar se a resposta é JSON antes de tentar fazer parse
+      const contentType = response.headers.get('content-type');
+      let data: any;
+
+      if (contentType && contentType.includes('application/json')) {
+        data = await response.json();
+      } else {
+        // Se não for JSON, pegar o texto
+        const text = await response.text();
+        data = { message: text || `Erro ${response.status}` };
+      }
 
       if (!response.ok) {
-        throw new Error(data.message || 'Erro na requisição');
+        // Melhorar mensagens de erro baseadas no status
+        let errorMessage = data.message || 'Erro na requisição';
+        
+        if (response.status === 404) {
+          errorMessage = `Rota não encontrada: ${endpoint}. Verifique se o backend está configurado corretamente.`;
+        } else if (response.status === 401) {
+          errorMessage = data.message || 'Credenciais inválidas. Verifique seu email e senha.';
+        } else if (response.status === 403) {
+          errorMessage = data.message || 'Acesso negado.';
+        } else if (response.status === 500) {
+          errorMessage = data.message || 'Erro no servidor. Tente novamente mais tarde.';
+        }
+        
+        throw new Error(errorMessage);
       }
 
       return data;
-    } catch (error) {
+    } catch (error: any) {
+      // Se for erro de rede
+      if (error.name === 'TypeError' && error.message === 'Failed to fetch') {
+        throw new Error('Não foi possível conectar ao servidor. Verifique sua conexão ou se o backend está online.');
+      }
+      
       console.error('API Error:', error);
       throw error;
     }
