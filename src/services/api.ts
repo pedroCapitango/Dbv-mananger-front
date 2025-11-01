@@ -1,6 +1,8 @@
 import { API_BASE_URL } from '../utils/constants';
 import type {
   RegisterDto,
+  RegisterSimpleDto,
+  RegisterMemberDto,
   AuthResponseDto,
   UserResponseDto,
   MemberResponseDto,
@@ -9,6 +11,10 @@ import type {
   EventResponseDto,
   CreateEventDto,
   UpdateEventDto,
+  EventParticipantDto,
+  EventStatisticsDto,
+  AddParticipantDto,
+  UpdateParticipantStatusDto,
   TransactionResponseDto,
   CreateTransactionDto,
   CategoryResponseDto,
@@ -32,10 +38,14 @@ import type {
 class ApiService {
   private baseUrl: string;
   private token: string | null = null;
+  private debug: boolean;
 
   constructor(baseUrl: string) {
     this.baseUrl = baseUrl;
     this.token = localStorage.getItem('auth_token');
+  // Debug habilitado via env: VITE_DEBUG_API=true. Evitar logs verbosos em produção.
+  const env: any = (import.meta as any)?.env || {};
+  this.debug = (env.VITE_DEBUG_API === 'true') || false;
   }
 
   setToken(token: string | null) {
@@ -47,13 +57,19 @@ class ApiService {
     }
   }
 
+  getToken(): string | null {
+    return this.token || localStorage.getItem('auth_token');
+  }
+
   private async request<T>(
     endpoint: string,
     options: RequestInit = {}
   ): Promise<T> {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
+      'Accept': 'application/json',
     };
+
 
     if (this.token) {
       headers['Authorization'] = `Bearer ${this.token}`;
@@ -63,11 +79,26 @@ class ApiService {
       Object.assign(headers, options.headers);
     }
 
+    const method = (options.method || 'GET').toString().toUpperCase();
+    const url = `${this.baseUrl}${endpoint}`;
+
+    if (this.debug) {
+      // Evitar logar payloads enormes ou dados sensíveis em produção
+      const bodyPreview = typeof options.body === 'string' && options.body.length > 300
+        ? options.body.substring(0, 300) + '...'
+        : options.body;
+      console.log('➡️ API Request:', { method, url, headers, body: bodyPreview });
+    }
+
     try {
-      const response = await fetch(`${this.baseUrl}${endpoint}`, {
+      const response = await fetch(url, {
         ...options,
         headers,
       });
+
+      if (this.debug) {
+        console.log('⬅️ API Response:', { method, url, status: response.status });
+      }
 
       // Para DELETE sem body
       if (response.status === 204) {
@@ -87,19 +118,53 @@ class ApiService {
       }
 
       if (!response.ok) {
-        // Melhorar mensagens de erro baseadas no status
-        let errorMessage = data.message || 'Erro na requisição';
-        
-        if (response.status === 404) {
-          errorMessage = `Rota não encontrada: ${endpoint}. Verifique se o backend está configurado corretamente.`;
-        } else if (response.status === 401) {
-          errorMessage = data.message || 'Credenciais inválidas. Verifique seu email e senha.';
-        } else if (response.status === 403) {
-          errorMessage = data.message || 'Acesso negado.';
-        } else if (response.status === 500) {
-          errorMessage = data.message || 'Erro no servidor. Tente novamente mais tarde.';
+        // Montar detalhes contextuais
+        const detailsParts: string[] = [];
+
+        // Extrair mensagens de validação quando existirem
+        if (data?.errors) {
+          if (Array.isArray(data.errors)) {
+            detailsParts.push(
+              data.errors
+                .map((e: any) => e?.message || e?.msg || JSON.stringify(e))
+                .join('; ')
+            );
+          } else if (typeof data.errors === 'object') {
+            detailsParts.push(
+              Object.entries(data.errors)
+                .map(([field, msgs]) => `${field}: ${Array.isArray(msgs) ? msgs.join(', ') : msgs}`)
+                .join('; ')
+            );
+          }
+        } else if (data?.error && typeof data.error === 'string') {
+          detailsParts.push(data.error);
+        } else if (data?.message && typeof data.message === 'string') {
+          detailsParts.push(data.message);
         }
-        
+
+        const details = detailsParts.filter(Boolean).join(' | ');
+
+        let errorMessage = 'Erro na requisição';
+        if (response.status === 400 || response.status === 422) {
+          errorMessage = `Falha de validação em ${method} ${endpoint}${details ? `: ${details}` : ''}`;
+        } else if (response.status === 401) {
+          // Se não autorizado, limpar token salvo
+          this.setToken(null);
+          errorMessage = details || 'Credenciais inválidas. Verifique seu email e senha.';
+        } else if (response.status === 403) {
+          errorMessage = details || 'Acesso negado.';
+        } else if (response.status === 404) {
+          errorMessage = `Rota não encontrada: ${url}. Verifique se o backend está configurado corretamente.`;
+        } else if (response.status >= 500) {
+          errorMessage = `Erro no servidor (${response.status}) em ${method} ${endpoint}${details ? `: ${details}` : ''}`;
+        } else {
+          errorMessage = details || `Erro ${response.status} em ${method} ${endpoint}`;
+        }
+
+        if (this.debug) {
+          console.error('❌ API Error:', { method, url, status: response.status, data, message: errorMessage });
+        }
+
         throw new Error(errorMessage);
       }
 
@@ -109,8 +174,9 @@ class ApiService {
       if (error.name === 'TypeError' && error.message === 'Failed to fetch') {
         throw new Error('Não foi possível conectar ao servidor. Verifique sua conexão ou se o backend está online.');
       }
-      
-      console.error('API Error:', error);
+      if (this.debug) {
+        console.error('API Error (catch):', error);
+      }
       throw error;
     }
   }
@@ -137,6 +203,39 @@ class ApiService {
     return response;
   }
 
+  // Registro Simples - Cria apenas User (staff/diretores/conselheiros)
+  async registerSimple(data: RegisterSimpleDto) {
+    console.log('🌐 API Service: Registrando usuário simples:', `${this.baseUrl}/auth/register`);
+    const response = await this.request<AuthResponseDto>('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    
+    if (response.access_token) {
+      this.setToken(response.access_token);
+      console.log('🔑 Token salvo após registro simples');
+    }
+    
+    return response;
+  }
+
+  // Registro de Membro - Cria User + Member (transação atômica)
+  async registerMember(data: RegisterMemberDto) {
+    console.log('🌐 API Service: Registrando membro completo:', `${this.baseUrl}/auth/register-member`);
+    const response = await this.request<AuthResponseDto>('/auth/register-member', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    
+    if (response.access_token) {
+      this.setToken(response.access_token);
+      console.log('🔑 Token salvo após registro de membro');
+    }
+    
+    return response;
+  }
+
+  // Legacy - manter para compatibilidade
   async register(data: RegisterDto) {
     const response = await this.request<AuthResponseDto>('/auth/register', {
       method: 'POST',
@@ -197,7 +296,7 @@ class ApiService {
 
   async updateMember(id: string, data: UpdateMemberDto) {
     return this.request<MemberResponseDto>(`/members/${id}`, {
-      method: 'PUT',
+      method: 'PATCH',
       body: JSON.stringify(data),
     });
   }
@@ -217,6 +316,39 @@ class ApiService {
   // ============= Unit Endpoints =============
   async getUnits() {
     return this.request<UnitResponseDto[]>('/units');
+  }
+
+  // Buscar unidades sem autenticação (para tela de registro)
+  async getUnitsPublic() {
+    const url = `${this.baseUrl}/units`;
+    
+    if (this.debug) {
+      console.log('➡️ API Request (Public):', { url });
+    }
+
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      });
+
+      if (this.debug) {
+        console.log('⬅️ API Response (Public):', { url, status: response.status });
+      }
+
+      if (!response.ok) {
+        throw new Error(`Erro ao buscar unidades: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data as UnitResponseDto[];
+    } catch (error: any) {
+      console.error('Erro ao buscar unidades públicas:', error);
+      throw error;
+    }
   }
 
   async getUnit(id: string) {
@@ -244,8 +376,25 @@ class ApiService {
   }
 
   // ============= Event Endpoints =============
-  async getEvents() {
-    return this.request<EventResponseDto[]>('/events');
+  
+  // CRUD de Eventos
+  async getEvents(filters?: {
+    eventType?: string;
+    status?: string;
+    startDate?: string;
+    endDate?: string;
+  }) {
+    let url = '/events';
+    if (filters) {
+      const params = new URLSearchParams();
+      if (filters.eventType) params.append('eventType', filters.eventType);
+      if (filters.status) params.append('status', filters.status);
+      if (filters.startDate) params.append('startDate', filters.startDate);
+      if (filters.endDate) params.append('endDate', filters.endDate);
+      const queryString = params.toString();
+      if (queryString) url += `?${queryString}`;
+    }
+    return this.request<EventResponseDto[]>(url);
   }
 
   async getEvent(id: string) {
@@ -261,40 +410,48 @@ class ApiService {
 
   async updateEvent(id: string, data: UpdateEventDto) {
     return this.request<EventResponseDto>(`/events/${id}`, {
-      method: 'PUT',
+      method: 'PATCH',
       body: JSON.stringify(data),
     });
   }
 
   async deleteEvent(id: string) {
-    return this.request<void>(`/events/${id}`, {
-      method: 'DELETE',
-    });
-  }
-
-  async getEventParticipants(eventId: string) {
-    return this.request<any>(`/events/${eventId}/participants`);
-  }
-
-  async addEventParticipant(eventId: string, memberId: string, data?: any) {
-    return this.request<any>(`/events/${eventId}/participants/${memberId}`, {
-      method: 'POST',
-      body: JSON.stringify(data || {}),
-    });
-  }
-
-  async removeEventParticipant(eventId: string, memberId: string) {
-    return this.request<void>(`/events/${eventId}/participants/${memberId}`, {
+    return this.request<EventResponseDto>(`/events/${id}`, {
       method: 'DELETE',
     });
   }
 
   async getEventStatistics(eventId: string) {
-    return this.request<any>(`/events/${eventId}/statistics`);
+    return this.request<EventStatisticsDto>(`/events/${eventId}/statistics`);
+  }
+
+  // Gerenciamento de Participantes
+  async getEventParticipants(eventId: string) {
+    return this.request<EventParticipantDto[]>(`/events/${eventId}/participants`);
+  }
+
+  async addEventParticipant(eventId: string, data: AddParticipantDto) {
+    return this.request<EventParticipantDto>(`/events/${eventId}/participants`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateParticipantStatus(eventId: string, memberId: string, data: UpdateParticipantStatusDto) {
+    return this.request<EventParticipantDto>(`/events/${eventId}/participants/${memberId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async removeEventParticipant(eventId: string, memberId: string) {
+    return this.request<EventParticipantDto>(`/events/${eventId}/participants/${memberId}`, {
+      method: 'DELETE',
+    });
   }
 
   async getMemberEvents(memberId: string) {
-    return this.request<EventResponseDto[]>(`/events/member/${memberId}`);
+    return this.request<EventParticipantDto[]>(`/events/member/${memberId}`);
   }
 
   // ============= Finance Endpoints =============

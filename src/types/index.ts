@@ -6,25 +6,78 @@ export interface LoginDto {
   password: string;
 }
 
-export interface RegisterDto {
-  name: string;
+// Registro Simples (User Only) - Para staff/diretores/conselheiros
+export interface RegisterSimpleDto {
+  fullName: string;
   email: string;
   password: string;
   confirmPassword: string;
+  role?: 'ADMIN' | 'DIRECTOR' | 'LEADER' | 'CONSELHEIRO' | 'MEMBRO';
+}
+
+// Registro de Membro Completo (User + Member)
+export interface RegisterMemberDto {
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+  birthDate: string;
+  gender: 'MASCULINO' | 'FEMININO';
+  unitId: string;
+  phone: string;
+  guardianName: string;
+  guardianPhone: string;
+  guardianEmail?: string;
+}
+
+// Legacy - manter para compatibilidade
+export interface AddressDto {
+  street: string;
+  number: string;
+  complement?: string;
+  neighborhood: string;
+  city: string;
+  state: string;
+  zipCode: string;
+}
+
+export interface ResponsibleDto {
+  name: string;
+  relationship: string;
+  phone: string;
+  email: string;
+}
+
+export interface RegisterDto {
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+  birthDate: string;
+  gender: string;
+  unitId?: string;
+  phone: string;
+  address: AddressDto;
+  responsible: ResponsibleDto;
 }
 
 export interface AuthResponseDto {
+  message?: string;
   access_token: string;
-  token_type: string;
-  expires_in: number;
+  token_type?: string;
+  expires_in?: number;
   user: UserResponseDto;
+  member?: MemberResponseDto; // Incluído quando é registro de membro
 }
 
 export interface UserResponseDto {
-  id: number;
+  id: string; // UUID do backend
   name: string;
   email: string;
   role: string;
+  memberId?: string | null; // Presente se role = MEMBRO
   createdAt?: string;
   updatedAt?: string;
 }
@@ -96,39 +149,153 @@ export interface UnitResponseDto {
   id: string;
   name: string;
   description?: string;
+  gender: 'MASCULINO' | 'FEMININO' | 'MISTO';
+  minCapacity: number;
+  maxCapacity: number;
+  isActive: boolean;
+  leaderUserId?: string | null;
   createdAt: string;
   updatedAt: string;
+  // Relações incluídas do backend
+  leader?: {
+    id: string;
+    email: string;
+    fullName: string;
+    role: string;
+  } | null;
+  _count?: {
+    members: number;
+  };
+  members?: MemberResponseDto[]; // Incluído em findOne
+  minAge?: number; // Legacy - manter para compatibilidade
+  maxAge?: number; // Legacy - manter para compatibilidade
 }
 
 export interface CreateUnitDto {
   name: string;
   description?: string;
+  gender: 'MASCULINO' | 'FEMININO' | 'MISTO';
+  minCapacity?: number; // Default 8
+  maxCapacity?: number; // Default 10
+  leaderUserId?: string; // UUID do conselheiro líder (opcional)
+  minAge?: number; // Legacy - manter para compatibilidade
+  maxAge?: number; // Legacy - manter para compatibilidade
 }
 
 // ============= Event Types =============
+
+// Enums
+export type EventType = 'MEETING' | 'CAMP' | 'ACTIVITY' | 'CEREMONY' | 'TRAINING' | 'COMMUNITY_SERVICE' | 'OTHER';
+export type EventStatus = 'SCHEDULED' | 'CONFIRMED' | 'CANCELLED' | 'COMPLETED';
+export type ParticipantStatus = 'PENDING' | 'CONFIRMED' | 'DECLINED' | 'ATTENDED' | 'ABSENT';
+
+// DTOs de Criação/Atualização
+export interface CreateEventDto {
+  title: string;
+  description?: string;
+  eventType: EventType;
+  startDate: string; // ISO 8601
+  endDate?: string; // ISO 8601
+  location?: string;
+  cost?: number; // DECIMAL(10,2) no backend
+  maxParticipants?: number;
+  requiresConfirmation?: boolean;
+  status?: EventStatus;
+}
+
+export interface UpdateEventDto {
+  title?: string;
+  description?: string;
+  eventType?: EventType;
+  startDate?: string;
+  endDate?: string;
+  location?: string;
+  cost?: number; // DECIMAL(10,2) no backend
+  maxParticipants?: number;
+  requiresConfirmation?: boolean;
+  status?: EventStatus;
+}
+
+export interface AddParticipantDto {
+  memberId: string;
+  status?: ParticipantStatus;
+  notes?: string;
+}
+
+export interface UpdateParticipantStatusDto {
+  status: ParticipantStatus;
+  notes?: string;
+}
+
+// Response DTOs
 export interface EventResponseDto {
   id: string;
   title: string;
-  description?: string;
+  description?: string | null;
+  eventType: EventType;
   startDate: string;
-  endDate?: string;
-  location?: string;
-  type: string;
-  status: 'scheduled' | 'ongoing' | 'completed' | 'cancelled';
-  maxParticipants?: number;
-  createdById: number;
+  endDate?: string | null;
+  location?: string | null;
+  cost?: number | null; // DECIMAL(10,2) retornado como number pelo backend
+  maxParticipants?: number | null;
+  requiresConfirmation: boolean;
+  status: EventStatus;
+  createdBy: string;
   createdAt: string;
   updatedAt: string;
+  creator?: {
+    id: string;
+    fullName: string;
+    email: string;
+    role: string;
+  };
   participants?: EventParticipantDto[];
   _count?: {
-    participants: number;
+    participants?: number;
+    attendances?: number;
+    notifications?: number;
   };
 }
 
 export interface EventParticipantDto {
   id: string;
-  status: 'pending' | 'confirmed' | 'cancelled';
-  member: MemberResponseDto;
+  eventId: string;
+  memberId: string;
+  status: ParticipantStatus;
+  confirmedAt?: string | null;
+  notes?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  member?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    birthdate?: string;
+    photoUrl?: string | null;
+    guardianName: string;
+    guardianPhone: string;
+    contactEmail?: string | null;
+    unit?: {
+      id: string;
+      name: string;
+    };
+  };
+  event?: EventResponseDto;
+}
+
+export interface EventStatisticsDto {
+  participants: {
+    PENDING: number;
+    CONFIRMED: number;
+    DECLINED: number;
+    ATTENDED?: number;
+    ABSENT?: number;
+  };
+  attendances?: {
+    PRESENT: number;
+    ABSENT: number;
+    LATE: number;
+  };
 }
 
 // ============= Finance Types =============
@@ -282,6 +449,8 @@ export interface MenuItem {
   icon: LucideIcon;
   label: string;
   path?: string;
+  // Optional role-based visibility control; when provided, only users with one of these roles can see the item
+  allowedRoles?: string[];
 }
 
 // ============= API Response Types =============
@@ -337,20 +506,7 @@ export interface CreateMemberDto {
 
 export interface UpdateMemberDto extends Partial<CreateMemberDto> {}
 
-export interface CreateEventDto {
-  title: string;
-  description?: string;
-  type: string;
-  startDate: string;
-  endDate?: string;
-  location?: string;
-  cost?: number;
-  maxParticipants?: number;
-  status?: 'planned' | 'ongoing' | 'completed' | 'cancelled';
-  requiresPayment?: boolean;
-}
-
-export interface UpdateEventDto extends Partial<CreateEventDto> {}
+// CreateEventDto e UpdateEventDto estão definidos acima em Event Types
 
 export interface CreateTransactionDto {
   type: 'income' | 'expense';
