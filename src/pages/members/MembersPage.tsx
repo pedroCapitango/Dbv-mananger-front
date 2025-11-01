@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { Plus, Search } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { Plus, Search, User, Calendar, Phone, MapPin, AlertCircle } from 'lucide-react';
 import { useMembers } from '../../hooks/useMembers';
+import { useUnits } from '../../hooks/useUnits';
 import { MainLayout } from '../../components/layout/MainLayout';
 import { Table } from '../../components/ui/Table';
 import { Button } from '../../components/ui/Button';
@@ -12,41 +13,9 @@ import { Alert } from '../../components/ui/Alert';
 import type { MemberResponseDto, CreateMemberDto } from '../../types';
 import { formatDate } from '../../utils/formatters';
 
-const memberFormFields: FormField[] = [
-  { name: 'firstName', label: 'Nome', type: 'text', required: true, placeholder: 'João' },
-  { name: 'lastName', label: 'Sobrenome', type: 'text', required: true, placeholder: 'Silva' },
-  { name: 'birthdate', label: 'Data de Nascimento', type: 'date', required: true },
-  { 
-    name: 'gender', 
-    label: 'Gênero', 
-    type: 'select', 
-    required: true,
-    options: [
-      { value: 'M', label: 'Masculino' },
-      { value: 'F', label: 'Feminino' }
-    ]
-  },
-  { name: 'parentName', label: 'Nome do Responsável', type: 'text', placeholder: 'Maria Silva' },
-  { name: 'parentPhone', label: 'Telefone do Responsável', type: 'tel', placeholder: '+244 923 000 000' },
-  { name: 'parentEmail', label: 'Email do Responsável', type: 'email', placeholder: 'maria@email.com' },
-  { name: 'address', label: 'Endereço', type: 'text', placeholder: 'Rua Principal, 123' },
-  { name: 'city', label: 'Cidade', type: 'text', placeholder: 'Luanda' },
-  { name: 'emergencyContact', label: 'Contato de Emergência', type: 'text', placeholder: 'José Silva' },
-  { name: 'emergencyPhone', label: 'Telefone de Emergência', type: 'tel', placeholder: '+244 923 000 001' },
-  { name: 'medicalInfo', label: 'Informações Médicas', type: 'textarea', placeholder: 'Alergias, condições médicas...' },
-  { 
-    name: 'status', 
-    label: 'Status', 
-    type: 'select',
-    options: [
-      { value: 'active', label: 'Ativo' },
-      { value: 'inactive', label: 'Inativo' }
-    ]
-  },
-];
-
 export const MembersPage: React.FC = () => {
   const { members, isLoading, error, createMember, updateMember, deleteMember, restoreMember } = useMembers();
+  const { units } = useUnits({ requireAuth: true });
   const [searchTerm, setSearchTerm] = useState('');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -55,20 +24,149 @@ export const MembersPage: React.FC = () => {
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
 
+  // Campos do formulário com validação correta
+  const memberFormFields: FormField[] = useMemo(() => [
+    { 
+      name: 'firstName', 
+      label: 'Nome', 
+      type: 'text', 
+      required: true, 
+      placeholder: 'João' 
+    },
+    { 
+      name: 'lastName', 
+      label: 'Sobrenome', 
+      type: 'text', 
+      required: true, 
+      placeholder: 'Silva' 
+    },
+    { 
+      name: 'birthdate', 
+      label: 'Data de Nascimento', 
+      type: 'date', 
+      required: true 
+    },
+    { 
+      name: 'gender', 
+      label: 'Gênero', 
+      type: 'select', 
+      required: true,
+      options: [
+        { value: 'MASCULINO', label: 'Masculino' },
+        { value: 'FEMININO', label: 'Feminino' }
+      ]
+    },
+    { 
+      name: 'unitId', 
+      label: 'Unidade', 
+      type: 'select',
+      options: units.map(u => ({ value: u.id, label: u.name }))
+    },
+    { 
+      name: 'parentName', 
+      label: 'Nome do Responsável', 
+      type: 'text', 
+      placeholder: 'Maria Silva' 
+    },
+    { 
+      name: 'parentPhone', 
+      label: 'Telefone do Responsável', 
+      type: 'tel', 
+      placeholder: '+244 923 000 000' 
+    },
+    { 
+      name: 'parentEmail', 
+      label: 'Email do Responsável', 
+      type: 'email', 
+      placeholder: 'responsavel@email.com' 
+    },
+    { 
+      name: 'address', 
+      label: 'Endereço Completo', 
+      type: 'text', 
+      placeholder: 'Rua, Número, Bairro' 
+    },
+    { 
+      name: 'emergencyContact', 
+      label: 'Contato de Emergência', 
+      type: 'text', 
+      placeholder: 'Nome completo' 
+    },
+    { 
+      name: 'emergencyPhone', 
+      label: 'Telefone de Emergência', 
+      type: 'tel', 
+      placeholder: '+244 923 000 001' 
+    },
+    { 
+      name: 'status', 
+      label: 'Status', 
+      type: 'select',
+      options: [
+        { value: 'active', label: 'Ativo' },
+        { value: 'inactive', label: 'Inativo' }
+      ]
+    },
+  ], [units]);
+
   const filteredMembers = members.filter((member) =>
-    `${member.firstName} ${member.lastName}`.toLowerCase().includes(searchTerm.toLowerCase())
+    `${member.firstName} ${member.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    member.unit?.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const columns = [
-    { key: 'firstName', label: 'Nome', render: (m: MemberResponseDto) => `${m.firstName} ${m.lastName}` },
-    { key: 'birthdate', label: 'Data de Nascimento', render: (m: MemberResponseDto) => formatDate(m.birthdate) },
-    { key: 'gender', label: 'Gênero', render: (m: MemberResponseDto) => m.gender === 'M' ? 'Masculino' : 'Feminino' },
-    { key: 'parentName', label: 'Responsável', render: (m: MemberResponseDto) => m.parentName || '-' },
+    { 
+      key: 'name', 
+      label: 'Membro', 
+      render: (m: MemberResponseDto) => (
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-medium">
+            {m.firstName.charAt(0)}{m.lastName.charAt(0)}
+          </div>
+          <div>
+            <div className="font-medium text-gray-900">{m.firstName} {m.lastName}</div>
+            <div className="text-sm text-gray-500">{formatDate(m.birthdate)}</div>
+          </div>
+        </div>
+      )
+    },
+    { 
+      key: 'gender', 
+      label: 'Gênero', 
+      render: (m: MemberResponseDto) => {
+        const genderMap: Record<string, string> = {
+          'MASCULINO': 'Masculino',
+          'FEMININO': 'Feminino',
+          'M': 'Masculino',
+          'F': 'Feminino'
+        };
+        return genderMap[m.gender] || m.gender;
+      }
+    },
+    { 
+      key: 'unit', 
+      label: 'Unidade', 
+      render: (m: MemberResponseDto) => (
+        <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded-md text-sm font-medium">
+          {m.unit?.name || 'Sem unidade'}
+        </span>
+      )
+    },
+    { 
+      key: 'contact', 
+      label: 'Contato', 
+      render: (m: MemberResponseDto) => (
+        <div className="text-sm">
+          <div className="text-gray-900">{m.parentName || '-'}</div>
+          <div className="text-gray-500">{m.parentPhone || 'Sem telefone'}</div>
+        </div>
+      )
+    },
     { 
       key: 'status', 
       label: 'Status', 
       render: (m: MemberResponseDto) => (
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+        <span className={`px-3 py-1 rounded-full text-xs font-medium ${
           m.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
         }`}>
           {m.status === 'active' ? 'Ativo' : 'Inativo'}
@@ -80,7 +178,25 @@ export const MembersPage: React.FC = () => {
   const handleCreate = async (data: Record<string, any>) => {
     try {
       setActionError(null);
-      await createMember(data as CreateMemberDto);
+      
+      // Transformar dados para o formato correto da API
+      const memberData: CreateMemberDto = {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        birthdate: data.birthdate,
+        gender: data.gender,
+        photoUrl: data.photoUrl || undefined,
+        parentName: data.parentName || undefined,
+        parentPhone: data.parentPhone || undefined,
+        parentEmail: data.parentEmail || undefined,
+        address: data.address || undefined,
+        emergencyContact: data.emergencyContact || undefined,
+        emergencyPhone: data.emergencyPhone || undefined,
+        unitId: data.unitId || undefined,
+        status: data.status || 'active',
+      };
+      
+      await createMember(memberData);
       setActionSuccess('Membro criado com sucesso!');
       setIsCreateModalOpen(false);
       setTimeout(() => setActionSuccess(null), 3000);
@@ -93,13 +209,37 @@ export const MembersPage: React.FC = () => {
     if (!selectedMember) return;
     try {
       setActionError(null);
-      await updateMember(selectedMember.id, data as any);
+      
+      console.log('📝 Dados recebidos do formulário:', data);
+      console.log('👤 Membro selecionado:', selectedMember);
+      
+      // Transformar dados para o formato correto da API
+      const memberData: CreateMemberDto = {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        birthdate: data.birthdate,
+        gender: data.gender,
+        photoUrl: data.photoUrl || undefined,
+        parentName: data.parentName || undefined,
+        parentPhone: data.parentPhone || undefined,
+        parentEmail: data.parentEmail || undefined,
+        address: data.address || undefined,
+        emergencyContact: data.emergencyContact || undefined,
+        emergencyPhone: data.emergencyPhone || undefined,
+        unitId: data.unitId && data.unitId !== '' ? data.unitId : undefined,
+        status: data.status || selectedMember.status,
+      };
+      
+      console.log('🚀 Dados que serão enviados:', memberData);
+      
+      await updateMember(selectedMember.id, memberData);
       setIsEditModalOpen(false);
       setSelectedMember(null);
       setActionSuccess('Membro atualizado com sucesso!');
       setTimeout(() => setActionSuccess(null), 3000);
     } catch (err: any) {
-      setActionError(err.message);
+      console.error('❌ Erro ao atualizar membro:', err);
+      setActionError(err.message || 'Erro ao atualizar membro');
     }
   };
 
@@ -208,7 +348,13 @@ export const MembersPage: React.FC = () => {
             fields={memberFormFields}
             onSubmit={handleUpdate}
             submitLabel="Salvar Alterações"
-            initialValues={selectedMember}
+            initialValues={{
+              ...selectedMember,
+              // Converter data ISO para formato YYYY-MM-DD para input type="date"
+              birthdate: selectedMember.birthdate?.split('T')[0] || selectedMember.birthdate,
+              // Garantir que unitId seja string ou undefined
+              unitId: selectedMember.unitId || '',
+            }}
             onCancel={() => {
               setIsEditModalOpen(false);
               setSelectedMember(null);
@@ -223,64 +369,133 @@ export const MembersPage: React.FC = () => {
           setIsViewModalOpen(false);
           setSelectedMember(null);
         }}
-        title="Visualizar Membro"
+        title="Detalhes do Membro"
       >
         {selectedMember && (
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm font-medium text-gray-500">Nome</p>
-                <p className="mt-1 text-sm text-gray-900">{selectedMember.firstName} {selectedMember.lastName}</p>
+          <div className="space-y-6">
+            {/* Header com Avatar */}
+            <div className="flex items-center gap-4 pb-4 border-b">
+              <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-2xl">
+                {selectedMember.firstName.charAt(0)}{selectedMember.lastName.charAt(0)}
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-500">Data de Nascimento</p>
-                <p className="mt-1 text-sm text-gray-900">{formatDate(selectedMember.birthdate)}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-500">Gênero</p>
-                <p className="mt-1 text-sm text-gray-900">{selectedMember.gender === 'M' ? 'Masculino' : 'Feminino'}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-500">Responsável</p>
-                <p className="mt-1 text-sm text-gray-900">{selectedMember.parentName || '-'}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-500">Tel. Responsável</p>
-                <p className="mt-1 text-sm text-gray-900">{selectedMember.parentPhone || '-'}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-500">Email Responsável</p>
-                <p className="mt-1 text-sm text-gray-900">{selectedMember.parentEmail || '-'}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-500">Contato de Emergência</p>
-                <p className="mt-1 text-sm text-gray-900">{selectedMember.emergencyContact || '-'}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-500">Tel. Emergência</p>
-                <p className="mt-1 text-sm text-gray-900">{selectedMember.emergencyPhone || '-'}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-500">Status</p>
-                <p className="mt-1">
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                <h3 className="text-xl font-bold text-gray-900">
+                  {selectedMember.firstName} {selectedMember.lastName}
+                </h3>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${
                     selectedMember.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
                   }`}>
                     {selectedMember.status === 'active' ? 'Ativo' : 'Inativo'}
                   </span>
-                </p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-500">Unidade</p>
-                <p className="mt-1 text-sm text-gray-900">{selectedMember.unit?.name || '-'}</p>
+                  {selectedMember.unit && (
+                    <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">
+                      {selectedMember.unit.name}
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
+
+            {/* Informações Pessoais */}
+            <div>
+              <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                <User size={16} className="text-gray-600" />
+                Informações Pessoais
+              </h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-xs font-medium text-gray-500">Data de Nascimento</p>
+                  <p className="mt-1 text-sm text-gray-900 flex items-center gap-1">
+                    <Calendar size={14} className="text-gray-400" />
+                    {formatDate(selectedMember.birthdate)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-gray-500">Gênero</p>
+                  <p className="mt-1 text-sm text-gray-900">
+                    {selectedMember.gender === 'MASCULINO' || selectedMember.gender === 'M' ? 'Masculino' : 'Feminino'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-gray-500">Data de Cadastro</p>
+                  <p className="mt-1 text-sm text-gray-900">{formatDate(selectedMember.joinDate)}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Endereço */}
             {selectedMember.address && (
               <div>
-                <p className="text-sm font-medium text-gray-500">Endereço</p>
-                <p className="mt-1 text-sm text-gray-900">{selectedMember.address}</p>
+                <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                  <MapPin size={16} className="text-gray-600" />
+                  Endereço
+                </h4>
+                <p className="text-sm text-gray-900">{selectedMember.address}</p>
               </div>
             )}
+
+            {/* Responsável */}
+            {(selectedMember.parentName || selectedMember.parentPhone || selectedMember.parentEmail) && (
+              <div>
+                <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                  <User size={16} className="text-gray-600" />
+                  Responsável
+                </h4>
+                <div className="grid grid-cols-2 gap-4">
+                  {selectedMember.parentName && (
+                    <div>
+                      <p className="text-xs font-medium text-gray-500">Nome</p>
+                      <p className="mt-1 text-sm text-gray-900">{selectedMember.parentName}</p>
+                    </div>
+                  )}
+                  {selectedMember.parentPhone && (
+                    <div>
+                      <p className="text-xs font-medium text-gray-500">Telefone</p>
+                      <p className="mt-1 text-sm text-gray-900 flex items-center gap-1">
+                        <Phone size={14} className="text-gray-400" />
+                        {selectedMember.parentPhone}
+                      </p>
+                    </div>
+                  )}
+                  {selectedMember.parentEmail && (
+                    <div className="col-span-2">
+                      <p className="text-xs font-medium text-gray-500">Email</p>
+                      <p className="mt-1 text-sm text-gray-900">{selectedMember.parentEmail}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Contato de Emergência */}
+            {(selectedMember.emergencyContact || selectedMember.emergencyPhone) && (
+              <div>
+                <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                  <AlertCircle size={16} className="text-red-600" />
+                  Contato de Emergência
+                </h4>
+                <div className="grid grid-cols-2 gap-4">
+                  {selectedMember.emergencyContact && (
+                    <div>
+                      <p className="text-xs font-medium text-gray-500">Nome</p>
+                      <p className="mt-1 text-sm text-gray-900">{selectedMember.emergencyContact}</p>
+                    </div>
+                  )}
+                  {selectedMember.emergencyPhone && (
+                    <div>
+                      <p className="text-xs font-medium text-gray-500">Telefone</p>
+                      <p className="mt-1 text-sm text-gray-900 flex items-center gap-1">
+                        <Phone size={14} className="text-gray-400" />
+                        {selectedMember.emergencyPhone}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Ações */}
             <div className="flex gap-2 pt-4 border-t">
               <Button
                 variant="secondary"
