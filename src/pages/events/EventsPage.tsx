@@ -16,32 +16,34 @@ const eventFormFields: FormField[] = [
   { name: 'title', label: 'Título do Evento', type: 'text', required: true, placeholder: 'Acampamento de Inverno' },
   { name: 'description', label: 'Descrição', type: 'textarea', placeholder: 'Descrição detalhada do evento...', rows: 4 },
   { 
-    name: 'type', 
+    name: 'eventType', 
     label: 'Tipo de Evento', 
     type: 'select', 
     required: true,
     options: [
-      { value: 'meeting', label: 'Reunião' },
-      { value: 'campamento', label: 'Acampamento' },
-      { value: 'training', label: 'Treinamento' },
-      { value: 'social', label: 'Social' },
-      { value: 'service', label: 'Serviço Comunitário' },
-      { value: 'other', label: 'Outro' }
+      { value: 'MEETING', label: 'Reunião' },
+      { value: 'CAMP', label: 'Acampamento' },
+      { value: 'ACTIVITY', label: 'Atividade' },
+      { value: 'CEREMONY', label: 'Cerimônia' },
+      { value: 'TRAINING', label: 'Treinamento' },
+      { value: 'COMMUNITY_SERVICE', label: 'Serviço Comunitário' },
+      { value: 'OTHER', label: 'Outro' }
     ]
   },
   { name: 'startDate', label: 'Data de Início', type: 'datetime-local', required: true },
   { name: 'endDate', label: 'Data de Término', type: 'datetime-local' },
   { name: 'location', label: 'Local', type: 'text', placeholder: 'Serra da Leba, Huíla' },
+  { name: 'cost', label: 'Custo (AOA)', type: 'number', placeholder: '5000' },
   { name: 'maxParticipants', label: 'Máximo de Participantes', type: 'number', placeholder: '50' },
   { 
     name: 'status', 
     label: 'Status', 
     type: 'select',
     options: [
-      { value: 'scheduled', label: 'Agendado' },
-      { value: 'ongoing', label: 'Em Andamento' },
-      { value: 'completed', label: 'Concluído' },
-      { value: 'cancelled', label: 'Cancelado' }
+      { value: 'SCHEDULED', label: 'Agendado' },
+      { value: 'CONFIRMED', label: 'Confirmado' },
+      { value: 'COMPLETED', label: 'Concluído' },
+      { value: 'CANCELLED', label: 'Cancelado' }
     ]
   },
 ];
@@ -63,20 +65,20 @@ export const EventsPage: React.FC = () => {
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
-      scheduled: 'bg-blue-100 text-blue-700',
-      ongoing: 'bg-green-100 text-green-700',
-      completed: 'bg-gray-100 text-gray-700',
-      cancelled: 'bg-red-100 text-red-700',
+      SCHEDULED: 'bg-blue-100 text-blue-700',
+      CONFIRMED: 'bg-green-100 text-green-700',
+      COMPLETED: 'bg-gray-100 text-gray-700',
+      CANCELLED: 'bg-red-100 text-red-700',
     };
     return colors[status] || 'bg-gray-100 text-gray-700';
   };
 
   const getStatusLabel = (status: string) => {
     const labels: Record<string, string> = {
-      scheduled: 'Agendado',
-      ongoing: 'Em Andamento',
-      completed: 'Concluído',
-      cancelled: 'Cancelado',
+      SCHEDULED: 'Agendado',
+      CONFIRMED: 'Confirmado',
+      COMPLETED: 'Concluído',
+      CANCELLED: 'Cancelado',
     };
     return labels[status] || status;
   };
@@ -88,7 +90,7 @@ export const EventsPage: React.FC = () => {
       render: (e: EventResponseDto) => (
         <div>
           <div className="font-medium text-gray-900">{e.title}</div>
-          <div className="text-sm text-gray-500">{e.type}</div>
+          <div className="text-sm text-gray-500">{e.eventType}</div>
         </div>
       )
     },
@@ -137,7 +139,21 @@ export const EventsPage: React.FC = () => {
   const handleCreate = async (data: Record<string, any>) => {
     try {
       setActionError(null);
-      await createEvent(data as CreateEventDto);
+      
+      // Transform form data to match API requirements
+      const eventData: CreateEventDto = {
+        title: data.title,
+        description: data.description || undefined,
+        eventType: data.eventType,
+        startDate: data.startDate ? new Date(data.startDate).toISOString() : new Date().toISOString(),
+        endDate: data.endDate ? new Date(data.endDate).toISOString() : undefined,
+        location: data.location || undefined,
+        cost: data.cost ? parseFloat(data.cost) : undefined,
+        maxParticipants: data.maxParticipants ? parseInt(data.maxParticipants) : undefined,
+        status: data.status || 'SCHEDULED',
+      };
+      
+      await createEvent(eventData);
       setActionSuccess('Evento criado com sucesso!');
       setIsCreateModalOpen(false);
       setTimeout(() => setActionSuccess(null), 3000);
@@ -150,7 +166,21 @@ export const EventsPage: React.FC = () => {
     if (!selectedEvent) return;
     try {
       setActionError(null);
-      await updateEvent(selectedEvent.id, data as CreateEventDto);
+      
+      // Transform form data to match API requirements
+      const eventData: CreateEventDto = {
+        title: data.title,
+        description: data.description || undefined,
+        eventType: data.eventType,
+        startDate: data.startDate ? new Date(data.startDate).toISOString() : selectedEvent.startDate,
+        endDate: data.endDate ? new Date(data.endDate).toISOString() : undefined,
+        location: data.location || undefined,
+        cost: data.cost ? parseFloat(data.cost) : undefined,
+        maxParticipants: data.maxParticipants ? parseInt(data.maxParticipants) : undefined,
+        status: data.status || selectedEvent.status,
+      };
+      
+      await updateEvent(selectedEvent.id, eventData);
       setActionSuccess('Evento atualizado com sucesso!');
       setIsEditModalOpen(false);
       setSelectedEvent(null);
@@ -287,7 +317,7 @@ export const EventsPage: React.FC = () => {
               
               <div>
                 <p className="text-sm font-medium text-gray-500">Tipo</p>
-                <p className="mt-1 text-sm text-gray-900">{selectedEvent.type}</p>
+                <p className="mt-1 text-sm text-gray-900">{selectedEvent.eventType}</p>
               </div>
 
               <div>
@@ -323,6 +353,15 @@ export const EventsPage: React.FC = () => {
                   <p className="mt-1 text-sm text-gray-900 flex items-center gap-2">
                     <MapPin size={16} className="text-gray-400" />
                     {selectedEvent.location}
+                  </p>
+                </div>
+              )}
+
+              {selectedEvent.cost && (
+                <div>
+                  <p className="text-sm font-medium text-gray-500">Custo</p>
+                  <p className="mt-1 text-sm text-gray-900">
+                    {selectedEvent.cost.toLocaleString('pt-AO', { style: 'currency', currency: 'AOA' })}
                   </p>
                 </div>
               )}
