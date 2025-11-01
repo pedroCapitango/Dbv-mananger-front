@@ -1,5 +1,5 @@
 import React from 'react';
-import { TrendingUp, TrendingDown, DollarSign, ArrowUpCircle, ArrowDownCircle } from 'lucide-react';
+import { DollarSign, ArrowUpCircle, ArrowDownCircle } from 'lucide-react';
 import { Card } from '../../../components/ui/Card';
 import type { FinanceDashboardDto } from '../../../types';
 import { formatCurrency } from '../../../utils/formatters';
