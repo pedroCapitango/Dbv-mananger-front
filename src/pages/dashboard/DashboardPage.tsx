@@ -51,7 +51,7 @@ export const DashboardPage: React.FC = () => {
 
   // Calculate statistics
   const activeMembers = members.filter(m => m.status === 'active').length;
-  const upcomingEvents = events.filter(e => e.status === 'scheduled').length;
+  const upcomingEvents = events.filter(e => e.status === 'SCHEDULED' || e.status === 'CONFIRMED').length;
   const totalInventory = items.reduce((sum, item) => sum + item.quantity, 0);
   const lowStockItems = items.filter(item => item.quantity < (item.minQuantity || 0)).length;
 
@@ -80,10 +80,10 @@ export const DashboardPage: React.FC = () => {
 
   // Events by status
   const eventsByStatus = [
-    { name: 'Agendados', value: events.filter(e => e.status === 'scheduled').length },
-    { name: 'Em Andamento', value: events.filter(e => e.status === 'ongoing').length },
-    { name: 'Concluídos', value: events.filter(e => e.status === 'completed').length },
-    { name: 'Cancelados', value: events.filter(e => e.status === 'cancelled').length }
+    { name: 'Agendados', value: events.filter(e => e.status === 'SCHEDULED').length },
+    { name: 'Confirmados', value: events.filter(e => e.status === 'CONFIRMED').length },
+    { name: 'Concluídos', value: events.filter(e => e.status === 'COMPLETED').length },
+    { name: 'Cancelados', value: events.filter(e => e.status === 'CANCELLED').length }
   ].filter(item => item.value > 0);
 
   // Members by unit (mock data - implementar quando tiver units)
