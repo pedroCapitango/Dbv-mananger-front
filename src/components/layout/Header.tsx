@@ -1,6 +1,7 @@
 import React from 'react';
 import { Bell, UserCircle, Search, Menu } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { normalizeRole } from '../../utils/roles';
 
 interface HeaderProps {
   title: string;
@@ -54,10 +55,10 @@ export const Header: React.FC<HeaderProps> = ({ title, onMenuClick, showMenuButt
             <UserCircle size={32} className="text-gray-600" />
             <div className="hidden md:block text-sm">
               <p className="font-medium text-gray-900">
-                {user?.name || 'Admin User'}
+                {user?.name || 'Usuário'}
               </p>
               <p className="text-gray-500 capitalize">
-                {user?.role || 'Administrador'}
+                {normalizeRole(user?.role) || 'Sem função'}
               </p>
             </div>
           </div>

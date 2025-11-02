@@ -98,6 +98,11 @@ export const Form: React.FC<FormProps> = ({
 }) => {
   const [formData, setFormData] = React.useState<Record<string, any>>(initialValues);
 
+  // Atualizar formData quando initialValues mudar (para edição)
+  React.useEffect(() => {
+    setFormData(initialValues);
+  }, [initialValues]);
+
   const handleChange = (name: string, value: any) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
@@ -142,13 +147,14 @@ export const Form: React.FC<FormProps> = ({
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           ) : (
-            <Input
+            <input
               type={field.type || 'text'}
               name={field.name}
               value={formData[field.name] || ''}
               onChange={(e) => handleChange(field.name, e.target.value)}
               placeholder={field.placeholder}
               required={field.required}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           )}
         </div>

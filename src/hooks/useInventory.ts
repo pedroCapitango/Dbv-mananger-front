@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { apiService } from '../services/api';
 import type {
   InventoryItemResponseDto,
@@ -20,6 +20,11 @@ export const useInventory = () => {
     setIsLoading(true);
     setError(null);
     try {
+      const token = apiService.getToken();
+      if (!token) {
+        setError('Usuário não autenticado. Por favor faça login.');
+        return;
+      }
       const [itemsData, loansData, categoriesData, dashboardData] =
         await Promise.all([
           apiService.getInventoryItems(),
@@ -105,7 +110,10 @@ export const useInventory = () => {
     }
   };
 
+  const didInit = useRef(false);
   useEffect(() => {
+    if (didInit.current) return;
+    didInit.current = true;
     fetchInventoryData();
   }, []);
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { apiService } from '../services/api';
 import type {
   TransactionResponseDto,
@@ -20,6 +20,12 @@ export const useFinance = () => {
     setIsLoading(true);
     setError(null);
     try {
+      // Se não há token, evitar chamadas protegidas e mostrar mensagem clara
+      const token = apiService.getToken();
+      if (!token) {
+        setError('Usuário não autenticado. Por favor faça login.');
+        return;
+      }
       const [transactionsData, categoriesData, accountsData, dashboardData] =
         await Promise.all([
           apiService.getTransactions(),
@@ -96,7 +102,11 @@ export const useFinance = () => {
     }
   };
 
+  // Evitar chamadas duplicadas no StrictMode (React 18)
+  const didInit = useRef(false);
   useEffect(() => {
+    if (didInit.current) return;
+    didInit.current = true;
     fetchFinanceData();
   }, []);
 

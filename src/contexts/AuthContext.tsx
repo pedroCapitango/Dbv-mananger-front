@@ -20,10 +20,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const checkAuth = async () => {
     const token = localStorage.getItem('auth_token');
+    console.log('🔎 AuthContext.checkAuth: token encontrado?', !!token);
     if (token) {
-      // Token existe, mas não vamos validar agora
-      // A validação acontecerá na primeira request que falhar
+      // Token existe: configurar no apiService
       apiService.setToken(token);
+    } else {
+      // Sem token: garantir que não há usuário na memória
+      setUser(null);
     }
     setIsLoading(false);
   };
@@ -67,7 +70,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     <AuthContext.Provider
       value={{
         user,
-        isAuthenticated: !!user,
+        // Considera autenticado apenas se houver user e token válido armazenado
+        isAuthenticated: !!user && !!localStorage.getItem('auth_token'),
         isLoading,
         login,
         logout,

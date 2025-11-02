@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { apiService } from '../services/api';
 import type { MemberResponseDto, CreateMemberDto, UpdateMemberDto } from '../types';
 
@@ -11,6 +11,11 @@ export const useMembers = () => {
     setIsLoading(true);
     setError(null);
     try {
+      const token = apiService.getToken();
+      if (!token) {
+        setError('Usuário não autenticado. Por favor faça login.');
+        return;
+      }
       const data = await apiService.getMembers();
       setMembers(data);
     } catch (err: any) {
@@ -70,7 +75,10 @@ export const useMembers = () => {
     }
   };
 
+  const didInit = useRef(false);
   useEffect(() => {
+    if (didInit.current) return;
+    didInit.current = true;
     fetchMembers();
   }, []);
 

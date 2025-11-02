@@ -1,7 +1,7 @@
 import React from 'react';
 import type { EventResponseDto } from '../../types';
 import { Card } from '../ui/Card';
-import { STATUS_COLORS } from '../../utils/constants';
+import { EVENT_STATUS_COLORS } from '../../utils/constants';
 import { formatDate } from '../../utils/formatters';
 
 interface EventListProps {
@@ -11,10 +11,10 @@ interface EventListProps {
 export const EventList: React.FC<EventListProps> = ({ events }) => {
   const getStatusLabel = (status: string) => {
     const labels: Record<string, string> = {
-      scheduled: 'Agendado',
-      ongoing: 'Em andamento',
-      completed: 'Concluído',
-      cancelled: 'Cancelado'
+      SCHEDULED: 'Agendado',
+      CONFIRMED: 'Confirmado',
+      COMPLETED: 'Concluído',
+      CANCELLED: 'Cancelado'
     };
     return labels[status] || status;
   };
@@ -49,7 +49,7 @@ export const EventList: React.FC<EventListProps> = ({ events }) => {
               </div>
               <span
                 className={`px-3 py-1 rounded-full text-xs font-medium ${
-                  STATUS_COLORS[event.status] || 'bg-gray-100 text-gray-800'
+                  EVENT_STATUS_COLORS[event.status as keyof typeof EVENT_STATUS_COLORS] || 'bg-gray-100 text-gray-800'
                 }`}
               >
                 {getStatusLabel(event.status)}

@@ -1,98 +1,120 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { apiService } from '../services/api';
 import type { EventResponseDto, CreateEventDto, UpdateEventDto } from '../types';
 
-export const useEvents = () => {
+interface UseEventsOptions {
+  eventType?: string;
+  status?: string;
+  startDate?: string;
+  endDate?: string;
+  autoFetch?: boolean;
+}
+
+export const useEvents = (options: UseEventsOptions = { autoFetch: true }) => {
   const [events, setEvents] = useState<EventResponseDto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const didInit = useRef(false);
 
   const fetchEvents = async () => {
-    setIsLoading(true);
-    setError(null);
     try {
-      const data = await apiService.getEvents();
+      setIsLoading(true);
+      setError(null);
+      
+      const filters = {
+        eventType: options.eventType,
+        status: options.status,
+        startDate: options.startDate,
+        endDate: options.endDate,
+      };
+
+      const data = await apiService.getEvents(filters);
       setEvents(data);
     } catch (err: any) {
-      setError(err.message || 'Erro ao buscar eventos');
+      setError(err.message || 'Erro ao carregar eventos');
       console.error('Erro ao buscar eventos:', err);
     } finally {
       setIsLoading(false);
     }
   };
 
+  useEffect(() => {
+    if (!options.autoFetch) return;
+    if (didInit.current) return;
+    didInit.current = true;
+    fetchEvents();
+  }, [options.autoFetch]);
+
   const createEvent = async (data: CreateEventDto) => {
     try {
+      setError(null);
       const newEvent = await apiService.createEvent(data);
-      setEvents(prev => [...prev, newEvent]);
+      setEvents(prev => [newEvent, ...prev]);
       return newEvent;
     } catch (err: any) {
-      const errorMessage = err.message || 'Erro ao criar evento';
-      setError(errorMessage);
-      throw new Error(errorMessage);
+      setError(err.message || 'Erro ao criar evento');
+      throw err;
     }
   };
 
   const updateEvent = async (id: string, data: UpdateEventDto) => {
     try {
+      setError(null);
       const updatedEvent = await apiService.updateEvent(id, data);
-      setEvents(prev =>
-        prev.map(event => (event.id === id ? updatedEvent : event))
-      );
+      setEvents(prev => prev.map(e => e.id === id ? updatedEvent : e));
       return updatedEvent;
     } catch (err: any) {
-      const errorMessage = err.message || 'Erro ao atualizar evento';
-      setError(errorMessage);
-      throw new Error(errorMessage);
+      setError(err.message || 'Erro ao atualizar evento');
+      throw err;
     }
   };
 
   const deleteEvent = async (id: string) => {
     try {
+      setError(null);
       await apiService.deleteEvent(id);
-      setEvents(prev => prev.filter(event => event.id !== id));
+      setEvents(prev => prev.filter(e => e.id !== id));
     } catch (err: any) {
-      const errorMessage = err.message || 'Erro ao deletar evento';
-      setError(errorMessage);
-      throw new Error(errorMessage);
+      setError(err.message || 'Erro ao deletar evento');
+      throw err;
     }
   };
 
-  const addParticipant = async (eventId: string, memberId: string) => {
+  const getEventById = async (id: string) => {
     try {
-      await apiService.addEventParticipant(eventId, memberId);
-      await fetchEvents(); // Atualiza a lista
+      setError(null);
+      return await apiService.getEvent(id);
     } catch (err: any) {
-      const errorMessage = err.message || 'Erro ao adicionar participante';
-      setError(errorMessage);
-      throw new Error(errorMessage);
+      setError(err.message || 'Erro ao buscar evento');
+      throw err;
     }
   };
 
-  const removeParticipant = async (eventId: string, memberId: string) => {
+  const getEventStatistics = async (eventId: string) => {
     try {
-      await apiService.removeEventParticipant(eventId, memberId);
-      await fetchEvents(); // Atualiza a lista
+      setError(null);
+      return await apiService.getEventStatistics(eventId);
     } catch (err: any) {
-      const errorMessage = err.message || 'Erro ao remover participante';
-      setError(errorMessage);
-      throw new Error(errorMessage);
+      setError(err.message || 'Erro ao buscar estatísticas');
+      throw err;
     }
   };
 
-  useEffect(() => {
+  const refreshEvents = () => {
     fetchEvents();
-  }, []);
+  };
 
   return {
     events,
     isLoading,
     error,
-    refetch: fetchEvents,
     createEvent,
     updateEvent,
     deleteEvent,
-    addParticipant,
-    removeParticipant,
+    getEventById,
+    getEventStatistics,
+    refreshEvents,
+    fetchEvents,
+    refetch: fetchEvents,
   };
 };

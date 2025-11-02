@@ -109,6 +109,15 @@ export const LoginScreen: React.FC = () => {
             Recuperar
           </a>
         </p>
+
+        <div className="mt-6 pt-6 border-t border-gray-200">
+          <p className="text-center text-sm text-gray-600">
+            Não tem uma conta?{' '}
+            <a href="/register" className="text-blue-600 hover:text-blue-700 font-medium hover:underline">
+              Criar conta
+            </a>
+          </p>
+        </div>
       </div>
     </div>
   );

@@ -1,6 +1,8 @@
 import React from 'react';
-import { Menu, X, LogOut, Home, Users, Calendar, DollarSign, Package, Award } from 'lucide-react';
+import { Menu, X, LogOut, Home, Users, Calendar, DollarSign, Package, Award, Layers } from 'lucide-react';
 import type { MenuItem } from '../../types';
+import { useAuth } from '../../contexts/AuthContext';
+import { ADMIN_ROLES, normalizeRole } from '../../utils/roles';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -14,8 +16,10 @@ const menuItems: MenuItem[] = [
   { id: 'dashboard', icon: Home, label: 'Dashboard' },
   { id: 'members', icon: Users, label: 'Membros' },
   { id: 'events', icon: Calendar, label: 'Eventos' },
-  { id: 'finance', icon: DollarSign, label: 'Finanças' },
-  { id: 'inventory', icon: Package, label: 'Inventário' },
+  // Restrict finance and inventory to admin-level roles by default
+  { id: 'finance', icon: DollarSign, label: 'Finanças', allowedRoles: ADMIN_ROLES },
+  { id: 'inventory', icon: Package, label: 'Inventário', allowedRoles: ADMIN_ROLES },
+  { id: 'units', icon: Layers, label: 'Unidades', allowedRoles: ADMIN_ROLES },
   { id: 'progress', icon: Award, label: 'Progresso' },
 ];
 
@@ -26,6 +30,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onNavigate,
   onLogout,
 }) => {
+  const { user } = useAuth();
+  const userRole = normalizeRole(user?.role);
+  const visibleItems = menuItems.filter((item) => {
+    if (!item.allowedRoles || item.allowedRoles.length === 0) return true;
+    if (!userRole) return false;
+    return item.allowedRoles.map((r) => r.toUpperCase()).includes(userRole);
+  });
   return (
     <aside 
       className={`${
@@ -47,7 +58,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       <nav className="flex-1 p-4 space-y-2" role="navigation">
-        {menuItems.map((item) => (
+        {visibleItems.map((item) => (
           <button
             key={item.id}
             onClick={() => onNavigate(item.id)}
