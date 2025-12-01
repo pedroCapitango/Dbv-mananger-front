@@ -417,13 +417,22 @@ export interface InventoryItemResponseDto {
   id: string;
   name: string;
   description?: string;
-  quantity: number;
-  minQuantity?: number;
-  location?: string;
+  code?: string;
   categoryId: string;
-  category?: InventoryCategoryResponseDto;
+  unitOfMeasure: string;
+  quantityInStock: number;
+  minimumStock: number;
+  condition: 'NEW' | 'GOOD' | 'WORN' | 'DAMAGED';
+  location?: string;
+  purchasePrice?: number;
+  purchaseDate?: string;
+  supplier?: string;
+  observations?: string;
+  photoUrl?: string;
+  isActive: boolean;
   createdAt: string;
   updatedAt: string;
+  category?: InventoryCategoryResponseDto;
 }
 
 export interface InventoryCategoryResponseDto {
@@ -581,15 +590,19 @@ export interface CreateTransactionDto {
 export interface CreateItemDto {
   name: string;
   description?: string;
+  code?: string;
   categoryId: string;
-  quantity: number;
-  minQuantity?: number;
-  unit?: string;
-  cost?: number;
+  unitOfMeasure: string;
+  quantityInStock?: number;
+  minimumStock?: number;
+  condition?: 'NEW' | 'GOOD' | 'WORN' | 'DAMAGED';
   location?: string;
-  barcode?: string;
-  imageUrl?: string;
-  status?: 'available' | 'low_stock' | 'out_of_stock' | 'discontinued';
+  purchasePrice?: number;
+  purchaseDate?: string;
+  supplier?: string;
+  observations?: string;
+  photoUrl?: string;
+  isActive?: boolean;
 }
 
 export interface UpdateItemDto extends Partial<CreateItemDto> {}
