@@ -64,7 +64,7 @@ export const FinanceOverview: React.FC<FinanceOverviewProps> = ({ dashboard }) =
       <Card className="p-6">
         <h3 className="text-lg font-semibold mb-4">Resumo Financeiro</h3>
         <p className="text-gray-600">
-          Selecione uma das abas acima para gerenciar transações, categorias, contas, mensalidades ou visualizar relatórios detalhados.
+          Selecione uma das abas acima para gerenciar transações, categorias, contas, cotas ou visualizar relatórios detalhados.
         </p>
       </Card>
     </div>
