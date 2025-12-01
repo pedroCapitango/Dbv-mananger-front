@@ -15,6 +15,7 @@ import { FinancePage } from './pages/finance/FinancePage';
 import { InventoryPage } from './pages/inventory/InventoryPage';
 import { UnitsPage } from './pages/units/UnitsPage';
 import { ProgressPage } from './pages/progress/ProgressPage';
+import { UsersPage } from './pages/users/UsersPage';
 import { MemberDashboard } from './pages/member/MemberDashboard';
 import { LoadingOverlay } from './components/ui/LoadingSpinner';
 import { isAdmin } from './utils/roles';
@@ -82,6 +83,16 @@ const AppContent: React.FC = () => {
           <ProtectedRoute>
             <RoleGuard allowedRoles={["ADMIN", "DIRECTOR"]}>
               <UnitsPage />
+            </RoleGuard>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/users"
+        element={
+          <ProtectedRoute>
+            <RoleGuard allowedRoles={["ADMIN", "DIRECTOR"]}>
+              <UsersPage />
             </RoleGuard>
           </ProtectedRoute>
         }

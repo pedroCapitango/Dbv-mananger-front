@@ -290,7 +290,7 @@ class ApiService {
     });
   }
 
-  async deleteUser(id: number) {
+  async deleteUser(id: string) {
     return this.request<void>(`/users/${id}`, {
       method: 'DELETE',
     });
