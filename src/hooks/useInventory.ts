@@ -110,6 +110,43 @@ export const useInventory = () => {
     }
   };
 
+  const createCategory = async (data: { name: string; description?: string }) => {
+    try {
+      const newCategory = await apiService.createInventoryCategory(data);
+      setCategories(prev => [...prev, newCategory]);
+      return newCategory;
+    } catch (err: any) {
+      const errorMessage = err.message || 'Erro ao criar categoria';
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    }
+  };
+
+  const updateCategory = async (id: string, data: { name: string; description?: string }) => {
+    try {
+      const updatedCategory = await apiService.updateInventoryCategory(id, data);
+      setCategories(prev =>
+        prev.map(cat => (cat.id === id ? updatedCategory : cat))
+      );
+      return updatedCategory;
+    } catch (err: any) {
+      const errorMessage = err.message || 'Erro ao atualizar categoria';
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    }
+  };
+
+  const deleteCategory = async (id: string) => {
+    try {
+      await apiService.deleteInventoryCategory(id);
+      setCategories(prev => prev.filter(cat => cat.id !== id));
+    } catch (err: any) {
+      const errorMessage = err.message || 'Erro ao deletar categoria';
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    }
+  };
+
   const didInit = useRef(false);
   useEffect(() => {
     if (didInit.current) return;
@@ -130,5 +167,8 @@ export const useInventory = () => {
     deleteItem,
     createLoan,
     returnLoan,
+    createCategory,
+    updateCategory,
+    deleteCategory,
   };
 };
