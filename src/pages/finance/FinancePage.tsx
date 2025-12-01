@@ -88,7 +88,7 @@ export const FinancePage: React.FC = () => {
       </div>
 
       <div className="mt-6">
-        {activeTab === 'overview' && <FinanceOverview dashboard={dashboard || undefined} />}
+        {activeTab === 'overview' && <FinanceOverview />}
         {activeTab === 'transactions' && <FinanceTransactions />}
         {activeTab === 'categories' && <FinanceCategories />}
         {activeTab === 'accounts' && <FinanceAccounts />}

@@ -17,14 +17,14 @@ export const FinanceCategories: React.FC = () => {
 
   const [form, setForm] = useState({
     name: '',
-    type: 'income' as 'income' | 'expense',
+    type: 'INCOME' as 'INCOME' | 'EXPENSE',
     description: '',
   });
 
   const resetForm = () => {
     setForm({
       name: '',
-      type: 'income',
+      type: 'INCOME',
       description: '',
     });
   };
@@ -50,8 +50,13 @@ export const FinanceCategories: React.FC = () => {
     }
   };
 
-  const incomeCategories = categories.filter(c => c.type === 'income');
-  const expenseCategories = categories.filter(c => c.type === 'expense');
+  // Filtrar categorias - backend pode retornar em maiúsculas ou minúsculas
+  const incomeCategories = categories.filter(c => 
+    c.type?.toLowerCase() === 'income'
+  );
+  const expenseCategories = categories.filter(c => 
+    c.type?.toLowerCase() === 'expense'
+  );
 
   if (isLoading) {
     return (
@@ -171,9 +176,9 @@ export const FinanceCategories: React.FC = () => {
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
-                onClick={() => setForm({ ...form, type: 'income' })}
+                onClick={() => setForm({ ...form, type: 'INCOME' })}
                 className={`p-3 rounded-lg border-2 flex items-center justify-center gap-2 ${
-                  form.type === 'income'
+                  form.type === 'INCOME'
                     ? 'border-green-500 bg-green-50 text-green-700'
                     : 'border-gray-300 hover:border-green-300'
                 }`}
@@ -183,9 +188,9 @@ export const FinanceCategories: React.FC = () => {
               </button>
               <button
                 type="button"
-                onClick={() => setForm({ ...form, type: 'expense' })}
+                onClick={() => setForm({ ...form, type: 'EXPENSE' })}
                 className={`p-3 rounded-lg border-2 flex items-center justify-center gap-2 ${
-                  form.type === 'expense'
+                  form.type === 'EXPENSE'
                     ? 'border-red-500 bg-red-50 text-red-700'
                     : 'border-gray-300 hover:border-red-300'
                 }`}

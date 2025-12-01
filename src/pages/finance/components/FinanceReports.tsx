@@ -34,18 +34,21 @@ export const FinanceReports: React.FC = () => {
   });
 
   const currentIncome = currentMonthTransactions
-    .filter(t => t.type === 'income')
+    .filter(t => t.type?.toLowerCase() === 'income')
     .reduce((sum, t) => sum + t.amount, 0);
   
   const currentExpense = currentMonthTransactions
-    .filter(t => t.type === 'expense')
+    .filter(t => t.type?.toLowerCase() === 'expense')
     .reduce((sum, t) => sum + t.amount, 0);
 
   const currentBalance = currentIncome - currentExpense;
 
   // Transações por categoria
   const transactionsByCategory = categories.map(cat => {
-    const catTransactions = transactions.filter(t => t.categoryId === cat.id);
+    // Buscar transações que correspondem à categoria (por nome ou por ID)
+    const catTransactions = transactions.filter(t => 
+      t.categoryId === cat.id || t.category?.name === cat.name
+    );
     const total = catTransactions.reduce((sum, t) => sum + t.amount, 0);
     return {
       category: cat.name,
@@ -93,7 +96,7 @@ export const FinanceReports: React.FC = () => {
             <div>
               <p className="text-sm text-gray-600">Receitas do Mês</p>
               <p className="text-2xl font-bold text-green-600">{formatCurrency(currentIncome)}</p>
-              <p className="text-xs text-gray-500 mt-1">{currentMonthTransactions.filter(t => t.type === 'income').length} transações</p>
+              <p className="text-xs text-gray-500 mt-1">{currentMonthTransactions.filter(t => t.type?.toLowerCase() === 'income').length} transações</p>
             </div>
             <TrendingUp className="text-green-500" size={32} />
           </div>
@@ -104,7 +107,7 @@ export const FinanceReports: React.FC = () => {
             <div>
               <p className="text-sm text-gray-600">Despesas do Mês</p>
               <p className="text-2xl font-bold text-red-600">{formatCurrency(currentExpense)}</p>
-              <p className="text-xs text-gray-500 mt-1">{currentMonthTransactions.filter(t => t.type === 'expense').length} transações</p>
+              <p className="text-xs text-gray-500 mt-1">{currentMonthTransactions.filter(t => t.type?.toLowerCase() === 'expense').length} transações</p>
             </div>
             <TrendingDown className="text-red-500" size={32} />
           </div>
@@ -200,7 +203,7 @@ export const FinanceReports: React.FC = () => {
                 <div key={index} className="space-y-1">
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-medium flex items-center gap-2">
-                      {item.type === 'income' ? (
+                      {item.type?.toLowerCase() === 'income' ? (
                         <TrendingUp size={16} className="text-green-500" />
                       ) : (
                         <TrendingDown size={16} className="text-red-500" />
@@ -208,7 +211,7 @@ export const FinanceReports: React.FC = () => {
                       {item.category}
                     </span>
                     <span className={`text-sm font-medium ${
-                      item.type === 'income' ? 'text-green-600' : 'text-red-600'
+                      item.type?.toLowerCase() === 'income' ? 'text-green-600' : 'text-red-600'
                     }`}>
                       {formatCurrency(item.total)}
                     </span>
@@ -216,7 +219,7 @@ export const FinanceReports: React.FC = () => {
                   <div className="w-full bg-gray-200 rounded-full h-2">
                     <div
                       className={`h-2 rounded-full ${
-                        item.type === 'income' ? 'bg-green-500' : 'bg-red-500'
+                        item.type?.toLowerCase() === 'income' ? 'bg-green-500' : 'bg-red-500'
                       }`}
                       style={{ width: `${percentage}%` }}
                     ></div>
@@ -252,9 +255,9 @@ export const FinanceReports: React.FC = () => {
                   <td className="px-4 py-3 text-sm">{transaction.description}</td>
                   <td className="px-4 py-3 text-sm">{transaction.category?.name || 'N/A'}</td>
                   <td className={`px-4 py-3 text-right font-medium ${
-                    transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
+                    transaction.type?.toLowerCase() === 'income' ? 'text-green-600' : 'text-red-600'
                   }`}>
-                    {transaction.type === 'income' ? '+' : '-'}{formatCurrency(transaction.amount)}
+                    {transaction.type?.toLowerCase() === 'income' ? '+' : '-'}{formatCurrency(transaction.amount)}
                   </td>
                 </tr>
               ))}

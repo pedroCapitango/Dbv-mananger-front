@@ -25,11 +25,9 @@ export const FinanceTransactions: React.FC = () => {
     type: 'income',
     amount: 0,
     description: '',
-    categoryId: '',
+    category: '',
     accountId: '',
     date: new Date().toISOString().split('T')[0],
-    paymentMethod: '',
-    reference: '',
     memberId: '',
     eventId: '',
   });
@@ -39,11 +37,9 @@ export const FinanceTransactions: React.FC = () => {
       type: 'income',
       amount: 0,
       description: '',
-      categoryId: '',
+      category: '',
       accountId: '',
       date: new Date().toISOString().split('T')[0],
-      paymentMethod: '',
-      reference: '',
       memberId: '',
       eventId: '',
     });
@@ -54,13 +50,20 @@ export const FinanceTransactions: React.FC = () => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      const data = {
-        ...form,
+      // Validar campos obrigatórios
+      if (!form.category || !form.accountId) {
+        throw new Error('Categoria e Conta são obrigatórios');
+      }
+
+      const data: CreateTransactionDto = {
+        type: form.type,
+        category: form.category,
+        amount: form.amount,
+        accountId: form.accountId,
         date: new Date(form.date).toISOString(),
+        description: form.description || undefined,
         memberId: form.memberId || undefined,
         eventId: form.eventId || undefined,
-        paymentMethod: form.paymentMethod || undefined,
-        reference: form.reference || undefined,
       };
 
       if (editingId) {
@@ -86,11 +89,9 @@ export const FinanceTransactions: React.FC = () => {
       type: transaction.type,
       amount: transaction.amount,
       description: transaction.description || '',
-      categoryId: transaction.categoryId,
+      category: transaction.category?.name || '',
       accountId: transaction.accountId,
       date: new Date(transaction.date).toISOString().split('T')[0],
-      paymentMethod: transaction.paymentMethod || '',
-      reference: transaction.reference || '',
       memberId: transaction.memberId || '',
       eventId: transaction.eventId || '',
     });
@@ -112,15 +113,16 @@ export const FinanceTransactions: React.FC = () => {
 
   const filteredTransactions = filterType === 'ALL'
     ? transactions
-    : transactions.filter(t => t.type === filterType);
+    : transactions.filter(t => t.type?.toLowerCase() === filterType.toLowerCase());
 
-  const incomeCategories = categories.filter(c => c.type === 'income');
-  const expenseCategories = categories.filter(c => c.type === 'expense');
+  // Filtrar categorias - backend pode retornar em maiúsculas ou minúsculas
+  const incomeCategories = categories.filter(c => c.type?.toLowerCase() === 'income');
+  const expenseCategories = categories.filter(c => c.type?.toLowerCase() === 'expense');
   const availableCategories = form.type === 'income' ? incomeCategories : expenseCategories;
 
   const stats = {
-    income: transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0),
-    expense: transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0),
+    income: transactions.filter(t => t.type?.toLowerCase() === 'income').reduce((sum, t) => sum + t.amount, 0),
+    expense: transactions.filter(t => t.type?.toLowerCase() === 'expense').reduce((sum, t) => sum + t.amount, 0),
   };
 
   if (isLoading) {
@@ -229,11 +231,11 @@ export const FinanceTransactions: React.FC = () => {
                     <td className="px-4 py-3 text-sm">{transaction.account?.name || 'N/A'}</td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
-                        transaction.type === 'income'
+                        transaction.type?.toLowerCase() === 'income'
                           ? 'bg-green-100 text-green-800'
                           : 'bg-red-100 text-red-800'
                       }`}>
-                        {transaction.type === 'income' ? (
+                        {transaction.type?.toLowerCase() === 'income' ? (
                           <><ArrowUpCircle size={14} /> Receita</>
                         ) : (
                           <><ArrowDownCircle size={14} /> Despesa</>
@@ -241,9 +243,9 @@ export const FinanceTransactions: React.FC = () => {
                       </span>
                     </td>
                     <td className={`px-4 py-3 text-right font-medium ${
-                      transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
+                      transaction.type?.toLowerCase() === 'income' ? 'text-green-600' : 'text-red-600'
                     }`}>
-                      {transaction.type === 'income' ? '+' : '-'}{formatCurrency(transaction.amount)}
+                      {transaction.type?.toLowerCase() === 'income' ? '+' : '-'}{formatCurrency(transaction.amount)}
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex justify-end gap-2">
@@ -285,7 +287,7 @@ export const FinanceTransactions: React.FC = () => {
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
-                onClick={() => setForm({ ...form, type: 'income', categoryId: '' })}
+                onClick={() => setForm({ ...form, type: 'income', category: '' })}
                 className={`p-3 rounded-lg border-2 flex items-center justify-center gap-2 ${
                   form.type === 'income'
                     ? 'border-green-500 bg-green-50 text-green-700'
@@ -297,7 +299,7 @@ export const FinanceTransactions: React.FC = () => {
               </button>
               <button
                 type="button"
-                onClick={() => setForm({ ...form, type: 'expense', categoryId: '' })}
+                onClick={() => setForm({ ...form, type: 'expense', category: '' })}
                 className={`p-3 rounded-lg border-2 flex items-center justify-center gap-2 ${
                   form.type === 'expense'
                     ? 'border-red-500 bg-red-50 text-red-700'
@@ -332,14 +334,14 @@ export const FinanceTransactions: React.FC = () => {
               Categoria *
             </label>
             <select
-              value={form.categoryId}
-              onChange={(e) => setForm({ ...form, categoryId: e.target.value })}
+              value={form.category}
+              onChange={(e) => setForm({ ...form, category: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
               required
             >
               <option value="">Selecione uma categoria</option>
               {availableCategories.map((cat) => (
-                <option key={cat.id} value={cat.id}>
+                <option key={cat.id} value={cat.name}>
                   {cat.name}
                 </option>
               ))}
@@ -371,20 +373,6 @@ export const FinanceTransactions: React.FC = () => {
             value={form.date}
             onChange={(e) => setForm({ ...form, date: e.target.value })}
             required
-          />
-
-          <Input
-            label="Método de Pagamento"
-            value={form.paymentMethod}
-            onChange={(e) => setForm({ ...form, paymentMethod: e.target.value })}
-            placeholder="Ex: Dinheiro, Transferência, Pix"
-          />
-
-          <Input
-            label="Referência"
-            value={form.reference}
-            onChange={(e) => setForm({ ...form, reference: e.target.value })}
-            placeholder="Ex: Número do recibo"
           />
 
           <div className="flex justify-end gap-2 pt-4">
