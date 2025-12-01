@@ -32,6 +32,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, title }) => {
       finance: 'Finanças',
       inventory: 'Inventário',
       units: 'Unidades',
+      users: 'Usuários',
       progress: 'Progresso',
     };
     return titles[getCurrentView()] || 'Dashboard';
@@ -45,6 +46,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, title }) => {
       finance: '/finance',
       inventory: '/inventory',
       units: '/units',
+      users: '/users',
       progress: '/progress',
     };
     
