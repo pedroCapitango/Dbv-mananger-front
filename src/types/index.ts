@@ -299,6 +299,16 @@ export interface EventStatisticsDto {
 }
 
 // ============= Finance Types =============
+
+// Account Type Enum (conforme API)
+export type AccountType = 'BANK' | 'CASH' | 'CREDIT_CARD';
+
+// Transaction Type Enum (conforme API)
+export type TransactionType = 'INCOME' | 'EXPENSE';
+
+// Payment Status Enum (conforme API)
+export type PaymentStatus = 'PENDING' | 'PAID' | 'OVERDUE' | 'CANCELLED';
+
 export interface TransactionResponseDto {
   id: string;
   description: string;
@@ -327,6 +337,12 @@ export interface AccountResponseDto {
   description?: string;
 }
 
+export interface CreateAccountDto {
+  name: string;
+  type: AccountType;
+  description?: string;
+}
+
 export interface FinanceDashboardDto {
   totalIncome: number;
   totalExpenses: number;
@@ -337,6 +353,54 @@ export interface FinanceDashboardDto {
     total: number;
   }[];
 }
+
+// ============= Fee Types (Cotas) =============
+export type FeeStatus = 'PENDING' | 'PAID' | 'OVERDUE' | 'CANCELLED';
+
+export interface FeeResponseDto {
+  id: string;
+  memberId: string;
+  amount: number;
+  dueDate: string;
+  paidDate?: string;
+  status: FeeStatus;
+  notes?: string;
+  accountId?: string;
+  transactionId?: string;
+  createdAt: string;
+  updatedAt: string;
+  member?: MemberResponseDto;
+  account?: AccountResponseDto;
+  transaction?: TransactionResponseDto;
+}
+
+export interface CreateFeeDto {
+  memberId: string;
+  amount: number;
+  dueDate: string;
+  status?: FeeStatus;
+  notes?: string;
+}
+
+export interface GenerateFeesDto {
+  amount: number;
+  dueDate: string;
+  unitId?: string;
+  notes?: string;
+}
+
+export interface PayFeeDto {
+  accountId: string;
+  paymentDate?: string;
+  notes?: string;
+}
+
+// Legacy aliases for compatibility
+export type MembershipFeeStatus = FeeStatus;
+export type MembershipFeeResponseDto = FeeResponseDto;
+export type CreateMembershipFeeDto = CreateFeeDto;
+export type GenerateMembershipFeesDto = GenerateFeesDto;
+export type PayMembershipFeeDto = PayFeeDto;
 
 // ============= Inventory Types =============
 export interface InventoryItemResponseDto {
