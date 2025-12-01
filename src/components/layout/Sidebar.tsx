@@ -1,5 +1,5 @@
 import React from 'react';
-import { Menu, X, LogOut, Home, Users, Calendar, DollarSign, Package, Award, Layers } from 'lucide-react';
+import { Menu, X, LogOut, Home, Users, Calendar, DollarSign, Package, Award, Layers, Shield } from 'lucide-react';
 import type { MenuItem } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
 import { ADMIN_ROLES, normalizeRole } from '../../utils/roles';
@@ -20,6 +20,7 @@ const menuItems: MenuItem[] = [
   { id: 'finance', icon: DollarSign, label: 'Finanças', allowedRoles: ADMIN_ROLES },
   { id: 'inventory', icon: Package, label: 'Inventário', allowedRoles: ADMIN_ROLES },
   { id: 'units', icon: Layers, label: 'Unidades', allowedRoles: ADMIN_ROLES },
+  { id: 'users', icon: Shield, label: 'Usuários', allowedRoles: ['ADMIN', 'DIRECTOR'] },
   { id: 'progress', icon: Award, label: 'Progresso' },
 ];
 
