@@ -97,10 +97,18 @@ export const Form: React.FC<FormProps> = ({
   onCancel,
 }) => {
   const [formData, setFormData] = React.useState<Record<string, any>>(initialValues);
+  const initialValuesRef = React.useRef(initialValues);
 
   // Atualizar formData quando initialValues mudar (para edição)
+  // Usar JSON.stringify para comparação profunda e evitar loops infinitos
   React.useEffect(() => {
-    setFormData(initialValues);
+    const currentValues = JSON.stringify(initialValues);
+    const previousValues = JSON.stringify(initialValuesRef.current);
+    
+    if (currentValues !== previousValues) {
+      setFormData(initialValues);
+      initialValuesRef.current = initialValues;
+    }
   }, [initialValues]);
 
   const handleChange = (name: string, value: any) => {
