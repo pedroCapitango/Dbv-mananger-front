@@ -20,6 +20,10 @@ import type {
   CategoryResponseDto,
   AccountResponseDto,
   FinanceDashboardDto,
+  MembershipFeeResponseDto,
+  CreateMembershipFeeDto,
+  GenerateMembershipFeesDto,
+  PayMembershipFeeDto,
   InventoryItemResponseDto,
   CreateItemDto,
   UpdateItemDto,
@@ -491,25 +495,73 @@ class ApiService {
     return this.request<CategoryResponseDto[]>('/finance/categories');
   }
 
-  async getAccounts() {
-    return this.request<AccountResponseDto[]>('/finance/accounts');
-  }
-
-  async getMembershipFees() {
-    return this.request<any[]>('/finance/membership-fees');
-  }
-
-  async generateMembershipFees(data: any) {
-    return this.request<any>('/finance/membership-fees/generate', {
+  async createCategory(data: { name: string; type: 'income' | 'expense'; description?: string }) {
+    return this.request<CategoryResponseDto>('/finance/categories', {
       method: 'POST',
       body: JSON.stringify(data),
     });
   }
 
-  async payMembershipFee(id: string, data: any) {
-    return this.request<any>(`/finance/membership-fees/${id}/pay`, {
+  async getAccounts() {
+    return this.request<AccountResponseDto[]>('/finance/accounts');
+  }
+
+  async createAccount(data: { name: string; type: string; description?: string }) {
+    // Remover campos undefined para evitar problemas com o backend
+    const payload: any = {
+      name: data.name,
+      type: data.type,
+    };
+    
+    if (data.description && data.description.trim()) {
+      payload.description = data.description;
+    }
+    
+    console.log('📤 Enviando para API:', payload);
+    
+    return this.request<AccountResponseDto>('/finance/accounts', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  // ============= Membership Fees Endpoints =============
+  async getMembershipFees(filters?: { memberId?: string; status?: string }) {
+    const params = new URLSearchParams();
+    if (filters?.memberId) params.append('memberId', filters.memberId);
+    if (filters?.status) params.append('status', filters.status);
+    const query = params.toString() ? `?${params.toString()}` : '';
+    return this.request<MembershipFeeResponseDto[]>(`/finance/membership-fees${query}`);
+  }
+
+  async getMembershipFee(id: string) {
+    return this.request<MembershipFeeResponseDto>(`/finance/membership-fees/${id}`);
+  }
+
+  async createMembershipFee(data: CreateMembershipFeeDto) {
+    return this.request<MembershipFeeResponseDto>('/finance/membership-fees', {
       method: 'POST',
       body: JSON.stringify(data),
+    });
+  }
+
+  async generateMembershipFees(data: GenerateMembershipFeesDto) {
+    return this.request<{ created: number; fees: MembershipFeeResponseDto[] }>('/finance/membership-fees/generate', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async payMembershipFee(id: string, data: PayMembershipFeeDto) {
+    return this.request<MembershipFeeResponseDto>(`/finance/membership-fees/${id}/pay`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async cancelMembershipFee(id: string) {
+    return this.request<MembershipFeeResponseDto>(`/finance/membership-fees/${id}/cancel`, {
+      method: 'POST',
     });
   }
 
