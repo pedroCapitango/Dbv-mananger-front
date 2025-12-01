@@ -99,18 +99,24 @@ export interface MemberResponseDto {
   birthdate: string;
   gender: string;
   photoUrl?: string;
-  parentName?: string;
-  parentPhone?: string;
-  parentEmail?: string;
-  address?: string;
-  emergencyContact?: string;
-  emergencyPhone?: string;
+  guardianName?: string;
+  guardianPhone?: string;
+  contactEmail?: string;
+  enrollmentDate?: string;
   status: 'active' | 'inactive';
-  joinDate: string;
+  notes?: string;
+  currentClass?: string;
   unitId?: string;
   unit?: UnitResponseDto;
   createdAt: string;
   updatedAt: string;
+  deletedAt?: string;
+  _count?: {
+    progress: number;
+    specialties: number;
+  };
+  // Legacy compatibility - will be removed
+  joinDate?: string;
 }
 
 export interface CreateMemberDto {
@@ -119,28 +125,30 @@ export interface CreateMemberDto {
   birthdate: string;
   gender: string;
   photoUrl?: string;
-  parentName?: string;
-  parentPhone?: string;
-  parentEmail?: string;
-  address?: string;
-  emergencyContact?: string;
-  emergencyPhone?: string;
+  guardianName?: string;
+  guardianPhone?: string;
+  contactEmail?: string;
+  enrollmentDate?: string;
+  status?: string;
+  notes?: string;
   unitId?: string;
 }
 
 export interface UpdateMemberDto {
   firstName?: string;
   lastName?: string;
+export interface UpdateMemberDto {
+  firstName?: string;
+  lastName?: string;
   birthdate?: string;
   gender?: string;
   photoUrl?: string;
-  parentName?: string;
-  parentPhone?: string;
-  parentEmail?: string;
-  address?: string;
-  emergencyContact?: string;
-  emergencyPhone?: string;
-  status?: 'active' | 'inactive';
+  guardianName?: string;
+  guardianPhone?: string;
+  contactEmail?: string;
+  enrollmentDate?: string;
+  status?: string;
+  notes?: string;
   unitId?: string;
 }
 
@@ -313,9 +321,9 @@ export interface TransactionResponseDto {
   id: string;
   description: string;
   amount: number;
-  type: 'income' | 'expense';
+  type: 'income' | 'expense' | 'INCOME' | 'EXPENSE';
   date: string;
-  categoryId: string;
+  categoryId?: string;
   accountId: string;
   category?: CategoryResponseDto;
   account?: AccountResponseDto;
@@ -325,8 +333,10 @@ export interface TransactionResponseDto {
 export interface CategoryResponseDto {
   id: string;
   name: string;
-  type: 'income' | 'expense';
+  type: 'income' | 'expense' | 'INCOME' | 'EXPENSE';
   description?: string;
+  color?: string;
+  icon?: string;
 }
 
 export interface AccountResponseDto {
@@ -548,41 +558,24 @@ export interface Task {
 }
 
 // ============= Create/Update DTOs =============
-export interface CreateMemberDto {
-  firstName: string;
-  lastName: string;
-  birthdate: string;
-  gender: string;
-  photoUrl?: string;
-  parentName?: string;
-  parentPhone?: string;
-  parentEmail?: string;
-  address?: string;
-  city?: string;
-  postalCode?: string;
-  emergencyContact?: string;
-  emergencyPhone?: string;
-  medicalInfo?: string;
-  allergies?: string;
-  status?: 'active' | 'inactive';
-  unitId?: string;
-}
-
-export interface UpdateMemberDto extends Partial<CreateMemberDto> {}
+// CreateMemberDto and UpdateMemberDto defined above in Member Types
 
 // CreateEventDto e UpdateEventDto estão definidos acima em Event Types
 
 export interface CreateTransactionDto {
-  type: 'income' | 'expense';
+  type: 'INCOME' | 'EXPENSE' | 'income' | 'expense';
+  category: string;
   amount: number;
   description?: string;
-  categoryId: string;
   accountId: string;
+  date: string;
   memberId?: string;
   eventId?: string;
-  date: string;
-  paymentMethod?: string;
-  reference?: string;
+  receiptUrl?: string;
+  status?: 'PENDING' | 'PAID' | 'OVERDUE' | 'CANCELLED';
+  recurring?: boolean;
+  recurringType?: string;
+  tags?: string[];
 }
 
 export interface CreateItemDto {
