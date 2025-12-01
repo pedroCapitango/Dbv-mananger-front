@@ -122,6 +122,17 @@ class ApiService {
       }
 
       if (!response.ok) {
+        // Log completo do erro para debug - SEMPRE mostrar
+        console.error('🔍 API Error Details:', {
+          status: response.status,
+          statusText: response.statusText,
+          endpoint,
+          method,
+          url,
+          responseData: data,
+          responseDataStringified: JSON.stringify(data, null, 2)
+        });
+
         // Montar detalhes contextuais
         const detailsParts: string[] = [];
 
@@ -140,6 +151,9 @@ class ApiService {
                 .join('; ')
             );
           }
+        } else if (data?.message && Array.isArray(data.message)) {
+          // Mensagens de validação do NestJS vêm em array
+          detailsParts.push(data.message.join('; '));
         } else if (data?.error && typeof data.error === 'string') {
           detailsParts.push(data.error);
         } else if (data?.message && typeof data.message === 'string') {
@@ -612,10 +626,67 @@ class ApiService {
   }
 
   async createInventoryItem(data: CreateItemDto) {
-    return this.request<InventoryItemResponseDto>('/inventory/items', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
+    console.log('📦 API: Criando item no inventário');
+    console.log('📦 API: Dados originais:', data);
+    
+    // Mapear campos do frontend para o backend
+    const cleanData: any = {
+      name: data.name?.trim(),
+      categoryId: data.categoryId,
+      unitOfMeasure: data.unitOfMeasure?.trim() || 'unidade',
+    };
+
+    // Adicionar campos opcionais apenas se tiverem valor
+    if (data.description && data.description.trim()) cleanData.description = data.description.trim();
+    if (data.code && data.code.trim()) cleanData.code = data.code.trim();
+    if (data.quantityInStock !== undefined && data.quantityInStock !== null && data.quantityInStock !== '') {
+      cleanData.quantityInStock = Math.max(0, Number(data.quantityInStock)); // Garantir não-negativo
+    }
+    if (data.minimumStock !== undefined && data.minimumStock !== null && data.minimumStock !== '') {
+      cleanData.minimumStock = Math.max(0, Number(data.minimumStock)); // Garantir não-negativo
+    }
+    if (data.condition) cleanData.condition = data.condition;
+    if (data.location && data.location.trim()) cleanData.location = data.location.trim();
+    if (data.purchasePrice !== undefined && data.purchasePrice !== null && data.purchasePrice !== '') {
+      cleanData.purchasePrice = Math.max(0, Number(data.purchasePrice)); // Garantir não-negativo
+    }
+    if (data.purchaseDate) {
+      // Converter data para formato ISO completo se necessário
+      const date = data.purchaseDate.includes('T') ? data.purchaseDate : `${data.purchaseDate}T00:00:00.000Z`;
+      cleanData.purchaseDate = date;
+    }
+    if (data.supplier && data.supplier.trim()) cleanData.supplier = data.supplier.trim();
+    if (data.observations && data.observations.trim()) cleanData.observations = data.observations.trim();
+    if (data.photoUrl && data.photoUrl.trim()) cleanData.photoUrl = data.photoUrl.trim();
+    if (data.isActive !== undefined) cleanData.isActive = data.isActive;
+
+    console.log('📦 API: Dados limpos a enviar:', cleanData);
+    
+    // Validar campos obrigatórios
+    if (!cleanData.name || !cleanData.categoryId || !cleanData.unitOfMeasure) {
+      const missing = [];
+      if (!cleanData.name) missing.push('name');
+      if (!cleanData.categoryId) missing.push('categoryId');
+      if (!cleanData.unitOfMeasure) missing.push('unitOfMeasure');
+      throw new Error(`Campos obrigatórios inválidos: ${missing.join(', ')}`);
+    }
+    
+    try {
+      const result = await this.request<InventoryItemResponseDto>('/inventory/items', {
+        method: 'POST',
+        body: JSON.stringify(cleanData),
+      });
+      console.log('✅ API: Item criado com sucesso:', result);
+      return result;
+    } catch (error: any) {
+      console.error('❌ API: Erro ao criar item:', error);
+      console.error('❌ API: Dados que foram enviados:', cleanData);
+      console.error('❌ API: JSON enviado:', JSON.stringify(cleanData, null, 2));
+      
+      // Tentar fazer uma requisição de teste para ver o erro real
+      console.error('💡 Dica: Verifique se a categoria existe e se o token está válido');
+      throw error;
+    }
   }
 
   async updateInventoryItem(id: string, data: UpdateItemDto) {
@@ -633,6 +704,26 @@ class ApiService {
 
   async getInventoryCategories() {
     return this.request<any[]>('/inventory/categories');
+  }
+
+  async createInventoryCategory(data: { name: string; description?: string }) {
+    return this.request<any>('/inventory/categories', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateInventoryCategory(id: string, data: { name: string; description?: string }) {
+    return this.request<any>(`/inventory/categories/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteInventoryCategory(id: string) {
+    return this.request<void>(`/inventory/categories/${id}`, {
+      method: 'DELETE',
+    });
   }
 
   async getLoans() {
