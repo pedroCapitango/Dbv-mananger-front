@@ -20,12 +20,27 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const checkAuth = async () => {
     const token = localStorage.getItem('auth_token');
+    const userDataStr = localStorage.getItem('user_data');
+    
     console.log('🔎 AuthContext.checkAuth: token encontrado?', !!token);
-    if (token) {
-      // Token existe: configurar no apiService
-      apiService.setToken(token);
+    
+    if (token && userDataStr) {
+      try {
+        // Restaurar token e dados do usuário do localStorage
+        apiService.setToken(token);
+        const userData = JSON.parse(userDataStr);
+        setUser(userData);
+        console.log('✅ Sessão restaurada do localStorage:', userData);
+      } catch (error) {
+        console.error('❌ Erro ao restaurar sessão, limpando dados:', error);
+        // Dados corrompidos: limpar localStorage
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('user_data');
+        apiService.setToken(null);
+        setUser(null);
+      }
     } else {
-      // Sem token: garantir que não há usuário na memória
+      // Sem token ou dados: garantir que não há usuário na memória
       setUser(null);
     }
     setIsLoading(false);
@@ -50,7 +65,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       // A API retorna { access_token, token_type, expires_in, user }
       setUser(response.user);
-      console.log('👤 Usuário autenticado:', response.user);
+      // Armazenar dados do usuário no localStorage para persistir sessão
+      localStorage.setItem('user_data', JSON.stringify(response.user));
+      console.log('👤 Usuário autenticado e salvo no localStorage:', response.user);
     } catch (err: any) {
       console.error('❌ AuthContext: Erro no login:', err);
       const errorMessage = err.message || 'Erro ao fazer login';
@@ -63,6 +80,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = () => {
     apiService.logout();
+    localStorage.removeItem('user_data');
     setUser(null);
   };
 
