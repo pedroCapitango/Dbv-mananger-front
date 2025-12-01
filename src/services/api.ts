@@ -472,9 +472,33 @@ class ApiService {
   }
 
   async createTransaction(data: CreateTransactionDto) {
+    // Converter tipo para maiúsculas conforme esperado pelo backend
+    // Remover campos undefined para evitar problemas
+    const payload: any = {
+      type: data.type.toUpperCase() as 'INCOME' | 'EXPENSE',
+      category: data.category,
+      amount: data.amount,
+      date: data.date,
+      accountId: data.accountId,
+    };
+
+    // Adicionar campos opcionais apenas se tiverem valor
+    if (data.description) payload.description = data.description;
+    if (data.memberId) payload.memberId = data.memberId;
+    if (data.eventId) payload.eventId = data.eventId;
+    if (data.receiptUrl) payload.receiptUrl = data.receiptUrl;
+    if (data.status) payload.status = data.status;
+    if (data.recurring !== undefined) payload.recurring = data.recurring;
+    if (data.recurringType) payload.recurringType = data.recurringType;
+    if (data.tags) payload.tags = data.tags;
+
+    if (this.debug) {
+      console.log('📤 Enviando transação:', payload);
+    }
+
     return this.request<TransactionResponseDto>('/finance/transactions', {
       method: 'POST',
-      body: JSON.stringify(data),
+      body: JSON.stringify(payload),
     });
   }
 
@@ -495,10 +519,15 @@ class ApiService {
     return this.request<CategoryResponseDto[]>('/finance/categories');
   }
 
-  async createCategory(data: { name: string; type: 'income' | 'expense'; description?: string }) {
+  async createCategory(data: { name: string; type: 'INCOME' | 'EXPENSE' | 'income' | 'expense'; description?: string }) {
+    // Converter tipo para maiúsculas conforme esperado pelo backend
+    const payload = {
+      ...data,
+      type: data.type.toUpperCase() as 'INCOME' | 'EXPENSE'
+    };
     return this.request<CategoryResponseDto>('/finance/categories', {
       method: 'POST',
-      body: JSON.stringify(data),
+      body: JSON.stringify(payload),
     });
   }
 
