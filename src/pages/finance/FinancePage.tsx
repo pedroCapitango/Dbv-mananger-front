@@ -9,7 +9,7 @@ import {
   FinanceTransactions,
   FinanceCategories,
   FinanceAccounts,
-  FinanceMembershipFees,
+  FinanceFees,
   FinanceReports
 } from './components';
 
@@ -47,7 +47,7 @@ export const FinancePage: React.FC = () => {
     { id: 'transactions' as TabType, label: 'Transações', icon: DollarSign },
     { id: 'categories' as TabType, label: 'Categorias', icon: Filter },
     { id: 'accounts' as TabType, label: 'Contas', icon: Wallet },
-    { id: 'fees' as TabType, label: 'Mensalidades', icon: CreditCard },
+    { id: 'fees' as TabType, label: 'Cotas', icon: CreditCard },
     { id: 'reports' as TabType, label: 'Relatórios', icon: Calendar },
   ];
 
@@ -92,7 +92,7 @@ export const FinancePage: React.FC = () => {
         {activeTab === 'transactions' && <FinanceTransactions />}
         {activeTab === 'categories' && <FinanceCategories />}
         {activeTab === 'accounts' && <FinanceAccounts />}
-        {activeTab === 'fees' && <FinanceMembershipFees />}
+        {activeTab === 'fees' && <FinanceFees />}
         {activeTab === 'reports' && <FinanceReports />}
       </div>
       </div>
