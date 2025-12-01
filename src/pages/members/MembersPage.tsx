@@ -63,40 +63,34 @@ export const MembersPage: React.FC = () => {
       options: units.map(u => ({ value: u.id, label: u.name }))
     },
     { 
-      name: 'parentName', 
+      name: 'guardianName', 
       label: 'Nome do Responsável', 
       type: 'text', 
       placeholder: 'Maria Silva' 
     },
     { 
-      name: 'parentPhone', 
+      name: 'guardianPhone', 
       label: 'Telefone do Responsável', 
       type: 'tel', 
       placeholder: '+244 923 000 000' 
     },
     { 
-      name: 'parentEmail', 
-      label: 'Email do Responsável', 
+      name: 'contactEmail', 
+      label: 'Email de Contato', 
       type: 'email', 
-      placeholder: 'responsavel@email.com' 
+      placeholder: 'contato@email.com' 
     },
     { 
-      name: 'address', 
-      label: 'Endereço Completo', 
-      type: 'text', 
-      placeholder: 'Rua, Número, Bairro' 
+      name: 'enrollmentDate', 
+      label: 'Data de Matrícula', 
+      type: 'date'
     },
     { 
-      name: 'emergencyContact', 
-      label: 'Contato de Emergência', 
-      type: 'text', 
-      placeholder: 'Nome completo' 
-    },
-    { 
-      name: 'emergencyPhone', 
-      label: 'Telefone de Emergência', 
-      type: 'tel', 
-      placeholder: '+244 923 000 001' 
+      name: 'notes', 
+      label: 'Observações', 
+      type: 'textarea', 
+      placeholder: 'Informações adicionais...',
+      rows: 3
     },
     { 
       name: 'status', 
@@ -157,8 +151,8 @@ export const MembersPage: React.FC = () => {
       label: 'Contato', 
       render: (m: MemberResponseDto) => (
         <div className="text-sm">
-          <div className="text-gray-900">{m.parentName || '-'}</div>
-          <div className="text-gray-500">{m.parentPhone || 'Sem telefone'}</div>
+          <div className="text-gray-900">{m.guardianName || '-'}</div>
+          <div className="text-gray-500">{m.guardianPhone || 'Sem telefone'}</div>
         </div>
       )
     },
@@ -186,12 +180,11 @@ export const MembersPage: React.FC = () => {
         birthdate: data.birthdate,
         gender: data.gender,
         photoUrl: data.photoUrl || undefined,
-        parentName: data.parentName || undefined,
-        parentPhone: data.parentPhone || undefined,
-        parentEmail: data.parentEmail || undefined,
-        address: data.address || undefined,
-        emergencyContact: data.emergencyContact || undefined,
-        emergencyPhone: data.emergencyPhone || undefined,
+        guardianName: data.guardianName || undefined,
+        guardianPhone: data.guardianPhone || undefined,
+        contactEmail: data.contactEmail || undefined,
+        enrollmentDate: data.enrollmentDate || undefined,
+        notes: data.notes || undefined,
         unitId: data.unitId || undefined,
         status: data.status || 'active',
       };
@@ -220,12 +213,11 @@ export const MembersPage: React.FC = () => {
         birthdate: data.birthdate,
         gender: data.gender,
         photoUrl: data.photoUrl || undefined,
-        parentName: data.parentName || undefined,
-        parentPhone: data.parentPhone || undefined,
-        parentEmail: data.parentEmail || undefined,
-        address: data.address || undefined,
-        emergencyContact: data.emergencyContact || undefined,
-        emergencyPhone: data.emergencyPhone || undefined,
+        guardianName: data.guardianName || undefined,
+        guardianPhone: data.guardianPhone || undefined,
+        contactEmail: data.contactEmail || undefined,
+        enrollmentDate: data.enrollmentDate || undefined,
+        notes: data.notes || undefined,
         unitId: data.unitId && data.unitId !== '' ? data.unitId : undefined,
         status: data.status || selectedMember.status,
       };
@@ -419,79 +411,52 @@ export const MembersPage: React.FC = () => {
                 </div>
                 <div>
                   <p className="text-xs font-medium text-gray-500">Data de Cadastro</p>
-                  <p className="mt-1 text-sm text-gray-900">{formatDate(selectedMember.joinDate)}</p>
+                  <p className="mt-1 text-sm text-gray-900">{formatDate(selectedMember.enrollmentDate || selectedMember.createdAt)}</p>
                 </div>
               </div>
             </div>
 
-            {/* Endereço */}
-            {selectedMember.address && (
-              <div>
-                <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                  <MapPin size={16} className="text-gray-600" />
-                  Endereço
-                </h4>
-                <p className="text-sm text-gray-900">{selectedMember.address}</p>
-              </div>
-            )}
-
             {/* Responsável */}
-            {(selectedMember.parentName || selectedMember.parentPhone || selectedMember.parentEmail) && (
+            {(selectedMember.guardianName || selectedMember.guardianPhone || selectedMember.contactEmail) && (
               <div>
                 <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
                   <User size={16} className="text-gray-600" />
                   Responsável
                 </h4>
                 <div className="grid grid-cols-2 gap-4">
-                  {selectedMember.parentName && (
+                  {selectedMember.guardianName && (
                     <div>
                       <p className="text-xs font-medium text-gray-500">Nome</p>
-                      <p className="mt-1 text-sm text-gray-900">{selectedMember.parentName}</p>
+                      <p className="mt-1 text-sm text-gray-900">{selectedMember.guardianName}</p>
                     </div>
                   )}
-                  {selectedMember.parentPhone && (
+                  {selectedMember.guardianPhone && (
                     <div>
                       <p className="text-xs font-medium text-gray-500">Telefone</p>
                       <p className="mt-1 text-sm text-gray-900 flex items-center gap-1">
                         <Phone size={14} className="text-gray-400" />
-                        {selectedMember.parentPhone}
+                        {selectedMember.guardianPhone}
                       </p>
                     </div>
                   )}
-                  {selectedMember.parentEmail && (
+                  {selectedMember.contactEmail && (
                     <div className="col-span-2">
                       <p className="text-xs font-medium text-gray-500">Email</p>
-                      <p className="mt-1 text-sm text-gray-900">{selectedMember.parentEmail}</p>
+                      <p className="mt-1 text-sm text-gray-900">{selectedMember.contactEmail}</p>
                     </div>
                   )}
                 </div>
               </div>
             )}
 
-            {/* Contato de Emergência */}
-            {(selectedMember.emergencyContact || selectedMember.emergencyPhone) && (
+            {/* Observações */}
+            {selectedMember.notes && (
               <div>
                 <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                  <AlertCircle size={16} className="text-red-600" />
-                  Contato de Emergência
+                  <AlertCircle size={16} className="text-gray-600" />
+                  Observações
                 </h4>
-                <div className="grid grid-cols-2 gap-4">
-                  {selectedMember.emergencyContact && (
-                    <div>
-                      <p className="text-xs font-medium text-gray-500">Nome</p>
-                      <p className="mt-1 text-sm text-gray-900">{selectedMember.emergencyContact}</p>
-                    </div>
-                  )}
-                  {selectedMember.emergencyPhone && (
-                    <div>
-                      <p className="text-xs font-medium text-gray-500">Telefone</p>
-                      <p className="mt-1 text-sm text-gray-900 flex items-center gap-1">
-                        <Phone size={14} className="text-gray-400" />
-                        {selectedMember.emergencyPhone}
-                      </p>
-                    </div>
-                  )}
-                </div>
+                <p className="text-sm text-gray-900 whitespace-pre-wrap">{selectedMember.notes}</p>
               </div>
             )}
 
