@@ -41,7 +41,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     <aside 
       className={`${
         isOpen ? 'w-64' : 'w-20'
-      } bg-blue-900 text-white transition-all duration-300 flex flex-col relative z-20`}
+      } h-screen bg-blue-900 text-white transition-all duration-300 flex flex-col relative z-20`}
       aria-label="Menu lateral"
     >
       <div className="p-4 flex items-center justify-between border-b border-blue-800">
