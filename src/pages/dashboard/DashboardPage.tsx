@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Users, Calendar, DollarSign, Package, TrendingUp, TrendingDown, Activity } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { Card } from '../../components/ui/Card';
@@ -7,7 +7,8 @@ import { useFinance } from '../../hooks/useFinance';
 import { useMembers } from '../../hooks/useMembers';
 import { useEvents } from '../../hooks/useEvents';
 import { useInventory } from '../../hooks/useInventory';
-import { formatCurrency } from '../../utils/formatters';
+import { useUnits } from '../../hooks/useUnits';
+import { formatCurrency, formatDate } from '../../utils/formatters';
 
 interface StatCardProps {
   icon: React.ElementType;
@@ -44,39 +45,58 @@ const StatCard: React.FC<StatCardProps> = ({ icon: Icon, label, value, change, c
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
 export const DashboardPage: React.FC = () => {
-  const { dashboard: financeDashboard, isLoading: financeLoading } = useFinance();
+  const { transactions, isLoading: financeLoading } = useFinance();
   const { members, isLoading: membersLoading } = useMembers();
   const { events, isLoading: eventsLoading } = useEvents();
   const { items, isLoading: inventoryLoading } = useInventory();
+  const { units, isLoading: unitsLoading } = useUnits();
 
-  // Calculate statistics
+  // Calculate statistics from real data
   const activeMembers = members.filter(m => m.status === 'active').length;
   const upcomingEvents = events.filter(e => e.status === 'SCHEDULED' || e.status === 'CONFIRMED').length;
   const totalInventory = items.reduce((sum, item) => sum + item.quantity, 0);
-  const lowStockItems = items.filter(item => item.quantity < (item.minQuantity || 0)).length;
+  const lowStockItems = items.filter(item => item.quantity < (item.minQuantity || 10)).length;
 
-  // Financial chart data - últimos 6 meses
-  const monthlyFinancialData = financeDashboard?.transactions
-    ?.reduce((acc: any[], transaction) => {
-      const month = new Date(transaction.date).toLocaleDateString('pt-AO', { month: 'short' });
-      const existing = acc.find(item => item.month === month);
+  // Calculate financial totals from transactions
+  const totalIncome = transactions
+    .filter(t => t.type?.toLowerCase() === 'income')
+    .reduce((sum, t) => sum + t.amount, 0);
+  
+  const totalExpenses = transactions
+    .filter(t => t.type?.toLowerCase() === 'expense')
+    .reduce((sum, t) => sum + t.amount, 0);
+  
+  const balance = totalIncome - totalExpenses;
+
+  // Financial chart data - últimos 6 meses com dados reais
+  const monthlyFinancialData = useMemo(() => {
+    const monthsMap = new Map<string, { month: string, receita: number, despesa: number }>();
+    const now = new Date();
+    
+    // Inicializar últimos 6 meses
+    for (let i = 5; i >= 0; i--) {
+      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const monthKey = date.toLocaleDateString('pt-AO', { month: 'short', year: 'numeric' });
+      monthsMap.set(monthKey, { month: monthKey, receita: 0, despesa: 0 });
+    }
+
+    // Agrupar transações por mês
+    transactions.forEach(transaction => {
+      const date = new Date(transaction.date);
+      const monthKey = date.toLocaleDateString('pt-AO', { month: 'short', year: 'numeric' });
+      const existing = monthsMap.get(monthKey);
       
       if (existing) {
-        if (transaction.type === 'income') {
+        if (transaction.type?.toLowerCase() === 'income') {
           existing.receita += transaction.amount;
-        } else {
+        } else if (transaction.type?.toLowerCase() === 'expense') {
           existing.despesa += transaction.amount;
         }
-      } else {
-        acc.push({
-          month,
-          receita: transaction.type === 'income' ? transaction.amount : 0,
-          despesa: transaction.type === 'expense' ? transaction.amount : 0
-        });
       }
-      return acc;
-    }, [])
-    ?.slice(-6) || [];
+    });
+
+    return Array.from(monthsMap.values());
+  }, [transactions]);
 
   // Events by status
   const eventsByStatus = [
@@ -86,22 +106,67 @@ export const DashboardPage: React.FC = () => {
     { name: 'Cancelados', value: events.filter(e => e.status === 'CANCELLED').length }
   ].filter(item => item.value > 0);
 
-  // Members by unit (mock data - implementar quando tiver units)
-  const membersByUnit = [
-    { unit: 'Lobinhos', count: Math.floor(activeMembers * 0.3) },
-    { unit: 'Desbravadores', count: Math.floor(activeMembers * 0.4) },
-    { unit: 'Pioneiros', count: Math.floor(activeMembers * 0.3) }
-  ];
+  // Members by unit - dados reais
+  const membersByUnit = useMemo(() => {
+    return units.map(unit => {
+      const count = members.filter(m => m.unitId === unit.id && m.status === 'active').length;
+      return { unit: unit.name, count };
+    }).filter(item => item.count > 0);
+  }, [members, units]);
 
-  // Recent activities (mock - implementar com dados reais)
-  const recentActivities = [
-    { id: 1, type: 'member', title: 'Novo membro registrado', time: '2 horas atrás', color: 'bg-blue-500' },
-    { id: 2, type: 'event', title: 'Evento criado: Acampamento', time: '5 horas atrás', color: 'bg-green-500' },
-    { id: 3, type: 'finance', title: 'Transação registrada', time: '1 dia atrás', color: 'bg-yellow-500' },
-    { id: 4, type: 'inventory', title: 'Item adicionado ao estoque', time: '2 dias atrás', color: 'bg-purple-500' }
-  ];
+  // Recent activities - dados reais
+  const recentActivities = useMemo(() => {
+    const activities: any[] = [];
+    
+    // Últimos membros (até 2)
+    members
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, 2)
+      .forEach(member => {
+        activities.push({
+          id: `member-${member.id}`,
+          type: 'member',
+          title: `Novo membro: ${member.firstName} ${member.lastName}`,
+          time: formatDate(member.createdAt),
+          color: 'bg-blue-500'
+        });
+      });
+    
+    // Últimos eventos (até 2)
+    events
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, 2)
+      .forEach(event => {
+        activities.push({
+          id: `event-${event.id}`,
+          type: 'event',
+          title: `Evento: ${event.title}`,
+          time: formatDate(event.createdAt),
+          color: 'bg-green-500'
+        });
+      });
+    
+    // Últimas transações (até 2)
+    transactions
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .slice(0, 2)
+      .forEach(transaction => {
+        activities.push({
+          id: `transaction-${transaction.id}`,
+          type: 'finance',
+          title: `Transação: ${transaction.description || formatCurrency(transaction.amount)}`,
+          time: formatDate(transaction.date),
+          color: 'bg-yellow-500'
+        });
+      });
+    
+    // Ordenar por data e pegar as 6 mais recentes
+    return activities
+      .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
+      .slice(0, 6);
+  }, [members, events, transactions]);
 
-  const isLoading = financeLoading || membersLoading || eventsLoading || inventoryLoading;
+  const isLoading = financeLoading || membersLoading || eventsLoading || inventoryLoading || unitsLoading;
 
   if (isLoading) {
     return (
@@ -131,31 +196,25 @@ export const DashboardPage: React.FC = () => {
           icon={Users}
           label="Membros Ativos"
           value={activeMembers}
-          change="+12%"
-          changeType="increase"
           color="bg-blue-500"
         />
         <StatCard
           icon={Calendar}
           label="Eventos Agendados"
           value={upcomingEvents}
-          change="+3"
-          changeType="increase"
           color="bg-green-500"
         />
         <StatCard
           icon={DollarSign}
-          label="Saldo Mensal"
-          value={formatCurrency((financeDashboard?.totalIncome || 0) - (financeDashboard?.totalExpenses || 0))}
-          change="+8%"
-          changeType="increase"
+          label="Saldo Atual"
+          value={formatCurrency(balance)}
           color="bg-yellow-500"
         />
         <StatCard
           icon={Package}
           label="Itens em Estoque"
           value={totalInventory}
-          change={lowStockItems > 0 ? `-${lowStockItems} baixo` : 'OK'}
+          change={lowStockItems > 0 ? `${lowStockItems} baixo estoque` : 'Estoque OK'}
           changeType={lowStockItems > 0 ? 'decrease' : 'increase'}
           color="bg-purple-500"
         />
@@ -278,25 +337,25 @@ export const DashboardPage: React.FC = () => {
         <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white">
           <h3 className="text-sm font-medium mb-2 opacity-90">Receita Total</h3>
           <p className="text-3xl font-bold mb-1">
-            {formatCurrency(financeDashboard?.totalIncome || 0)}
+            {formatCurrency(totalIncome)}
           </p>
-          <p className="text-sm opacity-75">Este mês</p>
+          <p className="text-sm opacity-75">{transactions.filter(t => t.type?.toLowerCase() === 'income').length} transações</p>
         </Card>
 
         <Card className="bg-gradient-to-br from-red-500 to-red-600 text-white">
           <h3 className="text-sm font-medium mb-2 opacity-90">Despesas Totais</h3>
           <p className="text-3xl font-bold mb-1">
-            {formatCurrency(financeDashboard?.totalExpenses || 0)}
+            {formatCurrency(totalExpenses)}
           </p>
-          <p className="text-sm opacity-75">Este mês</p>
+          <p className="text-sm opacity-75">{transactions.filter(t => t.type?.toLowerCase() === 'expense').length} transações</p>
         </Card>
 
         <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white">
           <h3 className="text-sm font-medium mb-2 opacity-90">Saldo Atual</h3>
           <p className="text-3xl font-bold mb-1">
-            {formatCurrency((financeDashboard?.totalIncome || 0) - (financeDashboard?.totalExpenses || 0))}
+            {formatCurrency(balance)}
           </p>
-          <p className="text-sm opacity-75">Balanço mensal</p>
+          <p className="text-sm opacity-75">Balanço total</p>
         </Card>
       </div>
       </div>
